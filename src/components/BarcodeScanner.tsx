@@ -41,33 +41,46 @@ export default function BarcodeScanner({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    let stream: MediaStream | null = null;
     const reader = new BrowserMultiFormatReader();
 
-    reader
-      .decodeFromConstraints(
-        { video: { facingMode: { ideal: 'environment' } }, audio: false },
-        videoRef.current!,
-        (result, _err, controls) => {
-          controlsRef.current = controls;
-          if (result && !cancelled) {
-            cancelled = true;
-            controls.stop();
-            onDetectedRef.current(result.getText());
-            onCloseRef.current();
-          }
-        },
-      )
-      .then((controls) => {
-        controlsRef.current = controls;
+    (async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error('Este navegador não expõe a câmera (é preciso HTTPS).');
+        }
+        // Pedimos a câmera nós mesmos: garante o prompt de permissão e erros claros.
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         setError(null);
-      })
-      .catch(() => {
-        setError('Câmera indisponível (permissão negada ou sem acesso). Digite o código abaixo.');
-      });
+        controlsRef.current = await reader.decodeFromStream(
+          stream,
+          videoRef.current!,
+          (result, _err, controls) => {
+            if (result && !cancelled) {
+              cancelled = true;
+              controls.stop();
+              onDetectedRef.current(result.getText());
+              onCloseRef.current();
+            }
+          },
+        );
+      } catch (e) {
+        const err = e as Error;
+        setError(`Câmera indisponível (${err?.name || 'erro'}: ${err?.message || ''}). Digite o código abaixo.`);
+      }
+    })();
 
     return () => {
       cancelled = true;
       controlsRef.current?.stop();
+      stream?.getTracks().forEach((t) => t.stop());
     };
   }, [open]);
 
