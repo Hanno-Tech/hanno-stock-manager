@@ -2,10 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';
 import { shelves, positions, sizeCategories } from '@/db/schema';
+import { getSession } from '@/lib/auth/session';
 
 const schema = z.object({
   code: z.string().min(1, 'Informe o código'),
@@ -31,6 +32,10 @@ export async function createShelf(_: ShelfFormState, formData: FormData): Promis
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const data = parsed.data;
 
+  const session = await getSession();
+  if (!session) redirect('/login');
+  const ownerId = session.userId;
+
   const [cat] = await db
     .select()
     .from(sizeCategories)
@@ -43,6 +48,7 @@ export async function createShelf(_: ShelfFormState, formData: FormData): Promis
       const [shelf] = await tx
         .insert(shelves)
         .values({
+          ownerId,
           code: data.code.trim(),
           categoryId: cat.id,
           aisle: data.aisle?.trim() || null,
@@ -67,9 +73,11 @@ export async function createShelf(_: ShelfFormState, formData: FormData): Promis
   redirect('/app/estantes');
 }
 
-/** Remove uma estante (as posições caem em cascata). */
+/** Remove uma estante do próprio usuário (as posições caem em cascata). */
 export async function deleteShelf(id: string): Promise<void> {
-  await db.delete(shelves).where(eq(shelves.id, id));
+  const session = await getSession();
+  if (!session) redirect('/login');
+  await db.delete(shelves).where(and(eq(shelves.id, id), eq(shelves.ownerId, session.userId)));
   revalidatePath('/app/estantes');
   redirect('/app/estantes');
 }

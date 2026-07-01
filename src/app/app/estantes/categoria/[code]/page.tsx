@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { PageHeader, Mono } from '@/components';
 import { listShelvesWithOccupancy } from '@/features/shelves/queries';
+import { requireUser } from '@/features/auth/queries';
 import { SIZE_LABEL, type Size } from '@/features/items/format';
 
 export default async function CategoriaPage({ params }: { params: Promise<{ code: string }> }) {
@@ -14,7 +15,8 @@ export default async function CategoriaPage({ params }: { params: Promise<{ code
   if (!['P', 'M', 'G'].includes(upper)) notFound();
   const cat = upper as Size;
 
-  const shelves = (await listShelvesWithOccupancy()).filter((s) => s.categoryCode === cat);
+  const user = await requireUser();
+  const shelves = (await listShelvesWithOccupancy(user.id)).filter((s) => s.categoryCode === cat);
 
   return (
     <>

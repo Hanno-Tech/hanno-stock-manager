@@ -8,6 +8,7 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { PageHeader, Mono } from '@/components';
 import DashboardSearch from '@/features/dashboard/DashboardSearch';
 import { getDashboardStats } from '@/features/dashboard/queries';
+import { requireUser } from '@/features/auth/queries';
 
 function KpiCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   return (
@@ -37,7 +38,8 @@ function SizeCard({ code, qty }: { code: 'P' | 'M' | 'G'; qty: number }) {
 }
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats();
+  const user = await requireUser();
+  const stats = await getDashboardStats(user.id);
 
   return (
     <>

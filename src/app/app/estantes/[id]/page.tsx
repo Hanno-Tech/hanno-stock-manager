@@ -6,11 +6,13 @@ import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { PageHeader, Mono } from '@/components';
 import { getShelfDetail } from '@/features/shelves/queries';
+import { requireUser } from '@/features/auth/queries';
 import ShelfMenu from '@/features/shelves/ShelfMenu';
 
 export default async function ShelfDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const shelf = await getShelfDetail(id);
+  const user = await requireUser();
+  const shelf = await getShelfDetail(id, user.id);
   if (!shelf) notFound();
 
   const occupied = shelf.positions.filter((p) => p.status === 'OCUPADA').length;

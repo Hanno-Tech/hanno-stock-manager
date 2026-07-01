@@ -15,21 +15,24 @@ export type DashboardStats = {
   bySize: { P: number; M: number; G: number };
 };
 
-/** KPIs do dashboard, derivados de items + movements. */
-export async function getDashboardStats(): Promise<DashboardStats> {
-  const inStock = and(eq(items.status, 'AGUARDANDO_RETIRADA'));
+/** KPIs do dashboard, sempre escopados ao usuário dono. */
+export async function getDashboardStats(ownerId: string): Promise<DashboardStats> {
+  const inStock = and(eq(items.status, 'AGUARDANDO_RETIRADA'), eq(items.ownerId, ownerId));
 
   const [[total], received, sizes] = await Promise.all([
     db.select({ n: count() }).from(items).where(inStock),
     db
       .select({ n: count() })
       .from(movements)
-      .where(and(eq(movements.type, 'ENTRADA'), gte(movements.createdAt, startOfToday()))),
-    db
-      .select({ size: items.sizeCode, n: count() })
-      .from(items)
-      .where(inStock)
-      .groupBy(items.sizeCode),
+      .innerJoin(items, eq(movements.itemId, items.id))
+      .where(
+        and(
+          eq(movements.type, 'ENTRADA'),
+          gte(movements.createdAt, startOfToday()),
+          eq(items.ownerId, ownerId),
+        ),
+      ),
+    db.select({ size: items.sizeCode, n: count() }).from(items).where(inStock).groupBy(items.sizeCode),
   ]);
 
   const bySize = { P: 0, M: 0, G: 0 };
@@ -42,8 +45,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 }
 
-/** Total de estantes cadastradas (usado no cabeçalho de Gerenciar Estantes). */
-export async function getShelfCount(): Promise<number> {
-  const [row] = await db.select({ n: count() }).from(shelves);
+/** Total de estantes do usuário. */
+export async function getShelfCount(ownerId: string): Promise<number> {
+  const [row] = await db
+    .select({ n: count() })
+    .from(shelves)
+    .where(eq(shelves.ownerId, ownerId));
   return row?.n ?? 0;
 }

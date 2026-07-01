@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import { PageHeader, Mono, StatusPill } from '@/components';
 import { getDeliveryStats, listDeliveries, type DeliveryRow } from '@/features/history/queries';
+import { requireUser } from '@/features/auth/queries';
 
 function dayBucket(d: Date): string {
   const today = new Date();
@@ -21,7 +22,11 @@ function time(d: Date): string {
 }
 
 export default async function HistoricoPage() {
-  const [stats, deliveries] = await Promise.all([getDeliveryStats(), listDeliveries()]);
+  const user = await requireUser();
+  const [stats, deliveries] = await Promise.all([
+    getDeliveryStats(user.id),
+    listDeliveries(user.id),
+  ]);
 
   // Agrupa por dia mantendo a ordem (já vem desc por data).
   const groups: { bucket: string; rows: DeliveryRow[] }[] = [];

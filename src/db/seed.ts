@@ -71,6 +71,7 @@ async function main() {
     const [shelf] = await db
       .insert(shelves)
       .values({
+        ownerId: demoUser.id,
         code: spec.code,
         categoryId: catByCode[spec.category].id,
         aisle: spec.aisle,
@@ -107,6 +108,7 @@ async function main() {
     const [item] = await db
       .insert(items)
       .values({
+        ownerId: demoUser.id,
         trackingCode: it.code,
         sizeCode: it.size,
         status: 'AGUARDANDO_RETIRADA',
@@ -135,6 +137,7 @@ async function main() {
     const [item] = await db
       .insert(items)
       .values({
+        ownerId: demoUser.id,
         trackingCode: d.code,
         sizeCode: d.size,
         status: 'ENTREGUE',

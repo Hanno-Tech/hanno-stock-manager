@@ -11,7 +11,9 @@ import { suggestPositionForSize, type SuggestedPosition } from './receive';
 
 /** Server action fina para o cliente re-consultar a sugestão ao trocar o tamanho. */
 export async function suggestPosition(size: 'P' | 'M' | 'G'): Promise<SuggestedPosition | null> {
-  return suggestPositionForSize(size);
+  const session = await getSession();
+  if (!session) return null;
+  return suggestPositionForSize(size, session.userId);
 }
 
 const receiveSchema = z.object({
@@ -35,23 +37,31 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { trackingCode, size, note } = parsed.data;
   const session = await getSession();
+  if (!session) redirect('/login');
+  const ownerId = session.userId;
 
   const dup = await db
     .select({ id: items.id })
     .from(items)
-    .where(eq(items.trackingCode, trackingCode.trim()))
+    .where(and(eq(items.ownerId, ownerId), eq(items.trackingCode, trackingCode.trim())))
     .limit(1);
   if (dup.length) return { error: 'Já existe um item com esse código' };
 
   try {
     await db.transaction(async (tx) => {
-      // Trava a primeira posição livre da categoria para evitar corrida entre operadores.
+      // Trava a primeira posição livre da categoria (entre as estantes do usuário).
       const [pos] = await tx
         .select({ id: positions.id })
         .from(positions)
         .innerJoin(shelves, eq(positions.shelfId, shelves.id))
         .innerJoin(sizeCategories, eq(shelves.categoryId, sizeCategories.id))
-        .where(and(eq(sizeCategories.code, size), eq(positions.status, 'LIVRE')))
+        .where(
+          and(
+            eq(sizeCategories.code, size),
+            eq(positions.status, 'LIVRE'),
+            eq(shelves.ownerId, ownerId),
+          ),
+        )
         .orderBy(asc(shelves.aisle), asc(shelves.level), asc(positions.slotNumber))
         .limit(1)
         .for('update', { of: positions });
@@ -61,6 +71,7 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
       const [item] = await tx
         .insert(items)
         .values({
+          ownerId,
           trackingCode: trackingCode.trim(),
           sizeCode: size,
           status: 'AGUARDANDO_RETIRADA',
@@ -92,9 +103,17 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
 /** Confirma a entrega/retirada de um item: libera a posição e registra o movimento. */
 export async function confirmDelivery(itemId: string, deliveredTo?: string): Promise<void> {
   const session = await getSession();
+  if (!session) redirect('/login');
+  const ownerId = session.userId;
 
   await db.transaction(async (tx) => {
-    const [item] = await tx.select().from(items).where(eq(items.id, itemId)).limit(1).for('update');
+    // Só entrega itens do próprio usuário.
+    const [item] = await tx
+      .select()
+      .from(items)
+      .where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)))
+      .limit(1)
+      .for('update');
     if (!item) throw new Error('Item não encontrado');
     if (item.status === 'ENTREGUE') return;
 

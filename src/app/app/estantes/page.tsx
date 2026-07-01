@@ -13,6 +13,7 @@ import {
   listRecentActivity,
 } from '@/features/shelves/queries';
 import { formatDateTime } from '@/features/items/format';
+import { requireUser } from '@/features/auth/queries';
 
 const ACTIVITY_LABEL = {
   ENTRADA: 'Recebido',
@@ -21,10 +22,11 @@ const ACTIVITY_LABEL = {
 } as const;
 
 export default async function EstantesPage() {
+  const user = await requireUser();
   const [categories, shelves, activity] = await Promise.all([
-    listCategories(),
-    listShelvesWithOccupancy(),
-    listRecentActivity(),
+    listCategories(user.id),
+    listShelvesWithOccupancy(user.id),
+    listRecentActivity(user.id),
   ]);
   const totalShelves = shelves.length;
 

@@ -17,6 +17,7 @@ export type SuggestedPosition = {
  */
 export async function suggestPositionForSize(
   size: 'P' | 'M' | 'G',
+  ownerId: string,
 ): Promise<SuggestedPosition | null> {
   const [row] = await db
     .select({
@@ -29,7 +30,9 @@ export async function suggestPositionForSize(
     .from(positions)
     .innerJoin(shelves, eq(positions.shelfId, shelves.id))
     .innerJoin(sizeCategories, eq(shelves.categoryId, sizeCategories.id))
-    .where(and(eq(sizeCategories.code, size), eq(positions.status, 'LIVRE')))
+    .where(
+      and(eq(sizeCategories.code, size), eq(positions.status, 'LIVRE'), eq(shelves.ownerId, ownerId)),
+    )
     .orderBy(asc(shelves.aisle), asc(shelves.level), asc(positions.slotNumber))
     .limit(1);
   return row ?? null;

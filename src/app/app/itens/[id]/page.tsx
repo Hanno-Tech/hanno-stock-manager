@@ -5,13 +5,15 @@ import Typography from '@mui/material/Typography';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import { PageHeader, Mono, StatusPill } from '@/components';
 import { getItemById } from '@/features/items/queries';
+import { requireUser } from '@/features/auth/queries';
 import { SIZE_LABEL, statusPill, formatDateTime } from '@/features/items/format';
 import ItemActions from '@/features/items/ItemActions';
 import ItemPhoto from '@/features/items/ItemPhoto';
 
 export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = await getItemById(id);
+  const user = await requireUser();
+  const item = await getItemById(id, user.id);
   if (!item) notFound();
 
   const pill = statusPill(item.status);

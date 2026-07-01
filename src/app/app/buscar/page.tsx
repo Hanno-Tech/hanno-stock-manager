@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { PageHeader, InventoryCard } from '@/components';
 import { searchItems } from '@/features/items/queries';
+import { requireUser } from '@/features/auth/queries';
 import { SIZE_LABEL, statusPill } from '@/features/items/format';
 
 export default async function BuscarPage({
@@ -10,7 +11,8 @@ export default async function BuscarPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q = '' } = await searchParams;
-  const results = await searchItems(q);
+  const user = await requireUser();
+  const results = await searchItems(q, user.id);
 
   return (
     <>

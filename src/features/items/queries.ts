@@ -1,5 +1,5 @@
 import 'server-only';
-import { desc, eq, ilike } from 'drizzle-orm';
+import { and, desc, eq, ilike } from 'drizzle-orm';
 import { db } from '@/db';
 import { items, positions, shelves } from '@/db/schema';
 
@@ -12,10 +12,14 @@ export type ItemListRow = {
   positionLabel: string | null;
 };
 
-/** Busca itens por código de rastreio (parcial). */
-export async function searchItems(q: string): Promise<ItemListRow[]> {
+/** Busca itens do usuário por código de rastreio (parcial). */
+export async function searchItems(q: string, ownerId: string): Promise<ItemListRow[]> {
   const term = q.trim();
-  const query = db
+  const where = term
+    ? and(eq(items.ownerId, ownerId), ilike(items.trackingCode, `%${term}%`))
+    : eq(items.ownerId, ownerId);
+
+  return db
     .select({
       id: items.id,
       trackingCode: items.trackingCode,
@@ -27,17 +31,15 @@ export async function searchItems(q: string): Promise<ItemListRow[]> {
     .from(items)
     .leftJoin(positions, eq(items.positionId, positions.id))
     .leftJoin(shelves, eq(positions.shelfId, shelves.id))
+    .where(where)
     .orderBy(desc(items.receivedAt))
     .limit(30);
-
-  if (term) query.where(ilike(items.trackingCode, `%${term}%`));
-  return query;
 }
 
 export type ItemDetail = NonNullable<Awaited<ReturnType<typeof getItemById>>>;
 
-/** Detalhe completo de um item, com posição/estante. */
-export async function getItemById(id: string) {
+/** Detalhe completo de um item do usuário, com posição/estante. */
+export async function getItemById(id: string, ownerId: string) {
   const [row] = await db
     .select({
       id: items.id,
@@ -58,7 +60,7 @@ export async function getItemById(id: string) {
     .from(items)
     .leftJoin(positions, eq(items.positionId, positions.id))
     .leftJoin(shelves, eq(positions.shelfId, shelves.id))
-    .where(eq(items.id, id))
+    .where(and(eq(items.id, id), eq(items.ownerId, ownerId)))
     .limit(1);
   return row ?? null;
 }

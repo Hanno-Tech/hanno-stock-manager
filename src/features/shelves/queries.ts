@@ -12,8 +12,8 @@ export type ShelfSummary = {
   occupied: number;
 };
 
-/** Lista estantes com ocupação (posições OCUPADAS / capacidade). */
-export async function listShelvesWithOccupancy(): Promise<ShelfSummary[]> {
+/** Lista estantes do usuário com ocupação (posições OCUPADAS / capacidade). */
+export async function listShelvesWithOccupancy(ownerId: string): Promise<ShelfSummary[]> {
   const rows = await db
     .select({
       id: shelves.id,
@@ -26,6 +26,7 @@ export async function listShelvesWithOccupancy(): Promise<ShelfSummary[]> {
     .from(shelves)
     .innerJoin(sizeCategories, eq(shelves.categoryId, sizeCategories.id))
     .leftJoin(positions, eq(positions.shelfId, shelves.id))
+    .where(eq(shelves.ownerId, ownerId))
     .groupBy(shelves.id, sizeCategories.code, sizeCategories.name, sizeCategories.sortOrder)
     .orderBy(sizeCategories.sortOrder, shelves.code);
   return rows;
@@ -38,7 +39,8 @@ export type CategoryInfo = {
   shelfCount: number;
 };
 
-export async function listCategories(): Promise<CategoryInfo[]> {
+/** Categorias (globais) com a contagem de estantes DO USUÁRIO. */
+export async function listCategories(ownerId: string): Promise<CategoryInfo[]> {
   return db
     .select({
       code: sizeCategories.code,
@@ -47,7 +49,7 @@ export async function listCategories(): Promise<CategoryInfo[]> {
       shelfCount: count(shelves.id),
     })
     .from(sizeCategories)
-    .leftJoin(shelves, eq(shelves.categoryId, sizeCategories.id))
+    .leftJoin(shelves, and(eq(shelves.categoryId, sizeCategories.id), eq(shelves.ownerId, ownerId)))
     .groupBy(sizeCategories.id)
     .orderBy(sizeCategories.sortOrder);
 }
@@ -60,7 +62,7 @@ export type RecentActivity = {
   createdAt: Date;
 };
 
-export async function listRecentActivity(limit = 8): Promise<RecentActivity[]> {
+export async function listRecentActivity(ownerId: string, limit = 8): Promise<RecentActivity[]> {
   return db
     .select({
       id: movements.id,
@@ -71,6 +73,7 @@ export async function listRecentActivity(limit = 8): Promise<RecentActivity[]> {
     })
     .from(movements)
     .innerJoin(items, eq(movements.itemId, items.id))
+    .where(eq(items.ownerId, ownerId))
     .orderBy(desc(movements.createdAt))
     .limit(limit);
 }
@@ -90,7 +93,8 @@ export type ShelfDetail = {
   }[];
 };
 
-export async function getShelfDetail(id: string): Promise<ShelfDetail | null> {
+/** Detalhe de uma estante — retorna null se não pertencer ao usuário. */
+export async function getShelfDetail(id: string, ownerId: string): Promise<ShelfDetail | null> {
   const [shelf] = await db
     .select({
       id: shelves.id,
@@ -100,7 +104,7 @@ export async function getShelfDetail(id: string): Promise<ShelfDetail | null> {
     })
     .from(shelves)
     .innerJoin(sizeCategories, eq(shelves.categoryId, sizeCategories.id))
-    .where(eq(shelves.id, id))
+    .where(and(eq(shelves.id, id), eq(shelves.ownerId, ownerId)))
     .limit(1);
   if (!shelf) return null;
 

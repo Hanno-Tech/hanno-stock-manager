@@ -55,18 +55,23 @@ export const sizeCategories = pgTable('size_category', {
 // ---------------------------------------------------------------------------
 // Estantes
 // ---------------------------------------------------------------------------
-export const shelves = pgTable('shelf', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  code: text('code').notNull().unique(),
-  categoryId: uuid('category_id')
-    .notNull()
-    .references(() => sizeCategories.id),
-  aisle: text('aisle'),
-  level: integer('level'),
-  capacity: integer('capacity').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+export const shelves = pgTable(
+  'shelf',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
+    code: text('code').notNull(),
+    categoryId: uuid('category_id')
+      .notNull()
+      .references(() => sizeCategories.id),
+    aisle: text('aisle'),
+    level: integer('level'),
+    capacity: integer('capacity').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [unique('uq_shelf_owner_code').on(t.ownerId, t.code)],
+);
 
 // ---------------------------------------------------------------------------
 // Posições (slots dentro da estante)
@@ -88,18 +93,23 @@ export const positions = pgTable(
 // ---------------------------------------------------------------------------
 // Itens / mercadorias
 // ---------------------------------------------------------------------------
-export const items = pgTable('item', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  trackingCode: text('tracking_code').notNull().unique(),
-  sizeCode: sizeEnum('size_code').notNull(),
-  status: itemStatusEnum('status').notNull().default('AGUARDANDO_RETIRADA'),
-  positionId: uuid('position_id').references(() => positions.id),
-  customerNote: text('customer_note'),
-  photoUrl: text('photo_url'),
-  receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
-  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
-  deliveredTo: text('delivered_to'),
-});
+export const items = pgTable(
+  'item',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
+    trackingCode: text('tracking_code').notNull(),
+    sizeCode: sizeEnum('size_code').notNull(),
+    status: itemStatusEnum('status').notNull().default('AGUARDANDO_RETIRADA'),
+    positionId: uuid('position_id').references(() => positions.id),
+    customerNote: text('customer_note'),
+    photoUrl: text('photo_url'),
+    receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
+    deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    deliveredTo: text('delivered_to'),
+  },
+  (t) => [unique('uq_item_owner_tracking').on(t.ownerId, t.trackingCode)],
+);
 
 // ---------------------------------------------------------------------------
 // Movimentações (log append-only) — fonte de verdade de histórico/KPIs

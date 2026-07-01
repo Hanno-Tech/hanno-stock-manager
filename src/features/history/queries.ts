@@ -15,16 +15,30 @@ function startOfMonth(): Date {
   return d;
 }
 
-export async function getDeliveryStats(): Promise<{ today: number; month: number }> {
+export async function getDeliveryStats(ownerId: string): Promise<{ today: number; month: number }> {
   const [today, month] = await Promise.all([
     db
       .select({ n: count() })
       .from(movements)
-      .where(and(eq(movements.type, 'ENTREGA'), gte(movements.createdAt, startOfToday()))),
+      .innerJoin(items, eq(movements.itemId, items.id))
+      .where(
+        and(
+          eq(movements.type, 'ENTREGA'),
+          gte(movements.createdAt, startOfToday()),
+          eq(items.ownerId, ownerId),
+        ),
+      ),
     db
       .select({ n: count() })
       .from(movements)
-      .where(and(eq(movements.type, 'ENTREGA'), gte(movements.createdAt, startOfMonth()))),
+      .innerJoin(items, eq(movements.itemId, items.id))
+      .where(
+        and(
+          eq(movements.type, 'ENTREGA'),
+          gte(movements.createdAt, startOfMonth()),
+          eq(items.ownerId, ownerId),
+        ),
+      ),
   ]);
   return { today: today[0]?.n ?? 0, month: month[0]?.n ?? 0 };
 }
@@ -37,7 +51,7 @@ export type DeliveryRow = {
   createdAt: Date;
 };
 
-export async function listDeliveries(limit = 50): Promise<DeliveryRow[]> {
+export async function listDeliveries(ownerId: string, limit = 50): Promise<DeliveryRow[]> {
   return db
     .select({
       id: movements.id,
@@ -48,7 +62,7 @@ export async function listDeliveries(limit = 50): Promise<DeliveryRow[]> {
     })
     .from(movements)
     .innerJoin(items, eq(movements.itemId, items.id))
-    .where(eq(movements.type, 'ENTREGA'))
+    .where(and(eq(movements.type, 'ENTREGA'), eq(items.ownerId, ownerId)))
     .orderBy(desc(movements.createdAt))
     .limit(limit);
 }
