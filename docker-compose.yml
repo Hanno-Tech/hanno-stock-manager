@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: estoque_rapido_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: estoque
+      POSTGRES_PASSWORD: estoque
+      POSTGRES_DB: estoque_rapido
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estoque -d estoque_rapido"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Storage S3-compatível para as fotos opcionais dos itens (Fase 6)
+  minio:
+    image: minio/minio:latest
+    container_name: estoque_rapido_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  db_data:
+  minio_data:

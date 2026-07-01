@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#2563eb"/>
+  <g fill="none" stroke="#ffffff" stroke-width="26" stroke-linejoin="round" stroke-linecap="round">
+    <!-- caixa / mercadoria -->
+    <path d="M256 128 L372 190 L372 322 L256 384 L140 322 L140 190 Z" stroke-linejoin="round"/>
+    <path d="M140 190 L256 252 L372 190" stroke-linejoin="round"/>
+    <path d="M256 252 L256 384" stroke-linejoin="round"/>
+  </g>
+</svg>
