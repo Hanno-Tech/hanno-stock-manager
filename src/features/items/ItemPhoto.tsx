@@ -17,7 +17,7 @@ export default function ItemPhoto({
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+    <div className="rounded-lg bg-card p-4">
       <form ref={formRef} action={formAction} className="flex flex-col gap-3">
         {state.error && (
           <p className="flex items-start gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-900">

@@ -37,7 +37,7 @@ export default async function LocaisPage() {
         </div>
 
         {locations.length === 0 ? (
-          <div className="rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
+          <div className="rounded-lg bg-card p-6 text-center">
             <p className="font-semibold">Nenhum local cadastrado</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Use o botão + para cadastrar onde você guarda as mercadorias.
@@ -52,7 +52,7 @@ export default async function LocaisPage() {
                 <li key={l.id}>
                   <Link
                     href={`/app/locais/${l.id}`}
-                    className="block rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/50 active:bg-muted"
+                    className="block rounded-lg bg-card p-4 transition-colors hover:bg-muted/50 active:bg-muted"
                   >
                     <div className="mb-3 flex items-center gap-3">
                       <KindIcon className="size-6 shrink-0 text-muted-foreground" />

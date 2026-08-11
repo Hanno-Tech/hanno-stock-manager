@@ -43,7 +43,7 @@ export default function ReceberForm({
 
   if (locations.length === 0) {
     return (
-      <div className="rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
+      <div className="rounded-lg bg-card p-6 text-center">
         <p className="font-semibold">Nenhum local com vaga livre</p>
         <p className="mt-1 mb-4 text-sm text-muted-foreground">
           Cadastre um local de guarda antes de receber mercadorias.
@@ -121,31 +121,27 @@ export default function ReceberForm({
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Vaga sugerida</span>
-        <div
-          className={`flex items-center gap-3 rounded-xl p-4 ${
-            suggestion ? "bg-emerald-50 ring-1 ring-emerald-200" : "bg-muted"
-          }`}
-        >
-          <MapPin
-            className={`size-5 shrink-0 ${suggestion ? "text-ml-success" : "text-muted-foreground"}`}
-          />
-          {suggestion ? (
-            <div className="min-w-0">
-              <Mono className="block font-bold">
-                {suggestion.locationName} · vaga {suggestion.label}
-              </Mono>
-              {suggestion.hint && (
-                <p className="truncate text-sm text-muted-foreground">
-                  {suggestion.hint}
-                </p>
-              )}
-            </div>
-          ) : (
+        {suggestion ? (
+          /* Amarelo sólido com pin, como a tela de ação do Tetris: é o dado que
+             o operador olha uma vez e leva na cabeça até a prateleira. */
+          <div className="rounded-lg bg-ml-yellow px-4 py-6 text-center text-ml-yellow-on">
+            <MapPin className="mx-auto size-10" strokeWidth={1.5} />
+            <p className="font-heading mt-2 text-2xl font-bold">
+              {suggestion.locationName}
+            </p>
+            <Mono className="text-3xl font-bold">vaga {suggestion.label}</Mono>
+            {suggestion.hint && (
+              <p className="mt-2 text-sm font-medium">{suggestion.hint}</p>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-lg bg-muted p-4">
+            <MapPin className="size-5 shrink-0 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               Este local está cheio. Escolha outro.
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

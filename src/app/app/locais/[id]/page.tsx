@@ -1,7 +1,5 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
-import { PageHeader, Mono } from '@/components';
+import { PageHeader, ScannableItem } from '@/components';
 import { Progress } from '@/components/ui/progress';
 import { getLocationDetail } from '@/features/locations/queries';
 import { KIND_ICON, KIND_LABEL, storedLabel } from '@/features/locations/format';
@@ -60,28 +58,19 @@ export default async function LocationDetailPage({
           <h2 className="font-heading mb-3 text-lg font-bold">Mercadorias aqui</h2>
 
           {loc.items.length === 0 ? (
-            <div className="rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
+            <div className="rounded-lg bg-card p-6 text-center">
               <p className="text-muted-foreground">Nenhuma mercadoria guardada neste local.</p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-2">
               {loc.items.map((it) => (
                 <li key={it.itemId}>
-                  <Link
+                  <ScannableItem
+                    label={`Vaga ${it.positionLabel}`}
+                    value={it.trackingCode}
+                    meta={it.customerNote || formatDateTime(it.receivedAt)}
                     href={`/app/itens/${it.itemId}`}
-                    className="flex items-center gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/50 active:bg-muted"
-                  >
-                    <Mono className="shrink-0 rounded-md bg-muted px-2 py-1 text-sm font-bold">
-                      {it.positionLabel}
-                    </Mono>
-                    <div className="min-w-0 flex-1">
-                      <Mono className="block truncate font-bold">{it.trackingCode}</Mono>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {it.customerNote || formatDateTime(it.receivedAt)}
-                      </p>
-                    </div>
-                    <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
-                  </Link>
+                  />
                 </li>
               ))}
             </ul>

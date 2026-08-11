@@ -39,11 +39,11 @@ export default async function HistoricoPage() {
       <PageHeader title="Histórico" />
       <div className="flex flex-col gap-6 p-4">
         <div className="flex gap-3">
-          <div className="flex-1 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+          <div className="flex-1 rounded-lg bg-card p-4">
             <p className="text-sm text-muted-foreground">Entregues hoje</p>
             <Mono className="text-3xl font-bold text-primary">{stats.today}</Mono>
           </div>
-          <div className="flex-1 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+          <div className="flex-1 rounded-lg bg-card p-4">
             <p className="text-sm text-muted-foreground">Este mês</p>
             <Mono className="text-3xl font-bold">{stats.month}</Mono>
           </div>
@@ -60,7 +60,7 @@ export default async function HistoricoPage() {
             </h2>
             <ul className="mt-2 flex flex-col gap-2">
               {g.rows.map((r) => (
-                <li key={r.id} className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+                <li key={r.id} className="rounded-lg bg-card p-4">
                   <div className="flex items-center justify-between">
                     <Mono className="font-bold">{r.trackingCode}</Mono>
                     <span className="text-sm text-muted-foreground">{time(r.createdAt)}</span>

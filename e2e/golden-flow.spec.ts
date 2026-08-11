@@ -43,7 +43,11 @@ test('fluxo dourado: login → receber → entregar → histórico', async ({ pa
   await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
   await expect(page.getByText('Entregue', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
 
-  // 6. Aparece no histórico
-  await page.goto('/app/historico');
-  await expect(page.getByText(code)).toBeVisible();
+  // 6. Aparece no histórico. Recarrega até aparecer: a revalidação do Server
+  // Action e a navegação correm em paralelo, então a primeira carga pode ser
+  // anterior à invalidação do cache da rota.
+  await expect(async () => {
+    await page.goto('/app/historico');
+    await expect(page.getByText(code)).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
 });

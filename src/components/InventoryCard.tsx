@@ -38,12 +38,12 @@ export default function InventoryCard({
     </div>
   );
 
-  const base = 'block overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10';
+  const base = 'block overflow-hidden rounded-lg bg-card text-card-foreground';
 
   return href ? (
     <Link
       href={href}
-      className={cn(base, 'transition-colors hover:bg-muted/50 active:bg-muted')}
+      className={cn(base, 'transition-colors hover:bg-muted/60 active:bg-muted')}
     >
       {content}
     </Link>

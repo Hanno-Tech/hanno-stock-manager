@@ -20,9 +20,9 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
   return (
     <>
       <PageHeader title="Detalhes do Item" back />
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-3 p-4">
         {/* Cabeçalho: código + status */}
-        <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+        <div className="rounded-lg bg-card p-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Código de rastreio</p>
@@ -40,33 +40,34 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* Localização — o que o operador precisa ler de longe, andando até a prateleira. */}
+        {/* Onde o pacote está. Tela-ação do Tetris: amarelo sólido, pin grande e
+            tipografia pesada — o operador lê isso andando até a prateleira. */}
         {positioned && (
-          <div className="rounded-xl bg-primary p-6 text-center text-primary-foreground">
-            <MapPin className="mx-auto size-6" />
-            <p className="mt-2 text-[0.6875rem] font-bold tracking-wider uppercase opacity-80">
+          <div className="-mx-4 bg-ml-yellow px-4 py-8 text-center text-ml-yellow-on">
+            <MapPin className="mx-auto size-12" strokeWidth={1.5} />
+            <p className="mt-3 text-sm font-semibold">
               {item.locationKind ? KIND_LABEL[item.locationKind] : 'Local'}
             </p>
-            <Mono className="text-3xl font-bold">{item.locationName}</Mono>
-            <p className="mt-4 text-[0.6875rem] font-bold tracking-wider uppercase opacity-80">
-              Vaga exata
-            </p>
-            <Mono className="text-3xl font-bold">{item.positionLabel}</Mono>
-            {item.locationHint && <p className="mt-2 text-sm opacity-90">{item.locationHint}</p>}
+            <p className="font-heading text-4xl font-bold">{item.locationName}</p>
+            <p className="mt-4 text-sm font-semibold">Vaga</p>
+            <Mono className="text-4xl font-bold">{item.positionLabel}</Mono>
+            {item.locationHint && (
+              <p className="mt-3 text-sm font-medium">{item.locationHint}</p>
+            )}
           </div>
         )}
 
         <ItemPhoto itemId={item.id} photoUrl={item.photoUrl} />
 
         {item.customerNote && (
-          <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+          <div className="rounded-lg bg-card p-4">
             <p className="text-sm text-muted-foreground">Cliente / Observação</p>
             <p>{item.customerNote}</p>
           </div>
         )}
 
         {item.deliveredTo && (
-          <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+          <div className="rounded-lg bg-card p-4">
             <p className="text-sm text-muted-foreground">Entregue a</p>
             <p className="font-semibold">{item.deliveredTo}</p>
           </div>

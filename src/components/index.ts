@@ -4,4 +4,6 @@ export { default as Mono } from './Mono';
 export { default as StatusPill } from './StatusPill';
 export { default as SearchBar } from './SearchBar';
 export { default as InventoryCard } from './InventoryCard';
+export { default as ScannableItem } from './ScannableItem';
+export { default as FeedbackPanel } from './FeedbackPanel';
 export { default as BarcodeScanner } from './BarcodeScanner';

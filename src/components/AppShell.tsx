@@ -28,7 +28,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <nav className="glass pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[480px] border-t">
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[480px] border-t bg-card">
         <ul className="flex h-16">
           {TABS.map(({ label, href, Icon }) => {
             const isActive = active === href;

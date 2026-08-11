@@ -108,13 +108,13 @@ export default function BarcodeScanner({
       aria-label="Escanear código"
       className="fixed inset-0 z-50 flex flex-col bg-black"
     >
-      <div className="pt-safe flex min-h-14 items-center gap-2 bg-primary px-2 text-primary-foreground">
+      <div className="pt-safe flex min-h-14 items-center gap-2 bg-ml-yellow px-2 text-ml-yellow-on">
         <Button
           variant="ghost"
           size="icon"
           aria-label="Fechar"
           onClick={onClose}
-          className="text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+          className="text-ml-yellow-on hover:bg-black/10 hover:text-ml-yellow-on"
         >
           <X />
         </Button>

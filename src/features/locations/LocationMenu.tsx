@@ -25,15 +25,15 @@ export default function LocationMenu({
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
+      {/* Herda o quase-preto do header amarelo — texto claro sumiria ali. */}
+      <button
+        type="button"
         aria-label={`Remover ${locationName}`}
         onClick={() => setConfirm(true)}
-        className="text-muted-foreground"
+        className="flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-black/10 active:bg-black/15"
       >
         <Trash2 className="size-5" />
-      </Button>
+      </button>
 
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent className="sm:max-w-sm">
