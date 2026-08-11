@@ -1,9 +1,28 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="112" fill="#2563eb"/>
-  <g fill="none" stroke="#ffffff" stroke-width="26" stroke-linejoin="round" stroke-linecap="round">
-    <!-- caixa / mercadoria -->
-    <path d="M256 128 L372 190 L372 322 L256 384 L140 322 L140 190 Z" stroke-linejoin="round"/>
-    <path d="M140 190 L256 252 L372 190" stroke-linejoin="round"/>
-    <path d="M256 252 L256 384" stroke-linejoin="round"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ícone do Doca App: caminhão de entrega parado na doca.
+       Amarelo Mercado Livre com desenho quase-preto (13.73:1) — a única
+       combinação legível com esse amarelo; com branco daria 1.27:1. -->
+  <rect width="512" height="512" fill="#FFE600"/>
+
+  <!-- Piso da doca. Vem antes das rodas para passar POR TRÁS delas. -->
+  <rect x="58" y="398" width="396" height="20" rx="10" fill="#1A1A1A"/>
+
+  <g fill="#1A1A1A">
+    <!-- Baú e cabine dividem a mesma linha de base (y=330), senão a cabine flutua. -->
+    <rect x="76" y="138" width="214" height="192" rx="20"/>
+    <path d="M290 198h92c8 0 15 3 20 9l38 46c5 6 8 13 8 21v56H290V198z"/>
+
+    <!-- Rodas apoiadas no piso: cy 354 + r 44 = 398, exatamente a linha da doca. -->
+    <circle cx="164" cy="354" r="44"/>
+    <circle cx="392" cy="354" r="44"/>
   </g>
+
+  <!-- Cubos vazados, para a roda não virar um disco chapado. -->
+  <circle cx="164" cy="354" r="17" fill="#FFE600"/>
+  <circle cx="392" cy="354" r="17" fill="#FFE600"/>
+
+  <!-- Porta do baú com a seta de saída: a mercadoria deixando a doca. -->
+  <rect x="108" y="170" width="150" height="128" rx="12" fill="#FFE600"/>
+  <path d="M148 234h62m0 0-24-24m24 24-24 24" stroke="#1A1A1A" stroke-width="18"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

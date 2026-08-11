@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { TriangleAlert, Info } from 'lucide-react';
+import { Logo } from '@/components';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,10 +15,13 @@ export default function LoginPage() {
   return (
     <div>
       {/* Amarelo ML com texto quase-preto — a única combinação legível (13.7:1). */}
-      <div className="mb-6 inline-flex items-center rounded-xl bg-ml-yellow px-4 py-2">
-        <span className="font-heading text-xl font-bold text-ml-yellow-on">Estoque Rápido</span>
+      <div className="mb-6 inline-flex items-center gap-2 rounded-lg bg-ml-yellow px-4 py-2 text-ml-yellow-on">
+        <Logo className="size-8" />
+        <span className="font-heading text-xl font-bold">Doca</span>
       </div>
-      <p className="mb-8 text-muted-foreground">Entre para gerenciar seu estoque.</p>
+      <p className="mb-8 text-muted-foreground">
+        Entre para gerenciar as mercadorias da sua agência.
+      </p>
 
       <form action={formAction} className="flex flex-col gap-4">
         {state.error && (

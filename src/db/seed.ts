@@ -1,5 +1,5 @@
 /**
- * Seed de dados de exemplo — Estoque Rápido.
+ * Seed de dados de exemplo — Doca App.
  * Autossuficiente: conexão própria via .env + imports relativos (roda sob tsx).
  *
  *   npm run db:seed

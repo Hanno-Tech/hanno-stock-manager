@@ -14,7 +14,7 @@ export default function PageHeader({
   back = false,
   actions,
 }: {
-  title: string;
+  title: React.ReactNode;
   back?: boolean;
   actions?: React.ReactNode;
 }) {
@@ -35,8 +35,8 @@ export default function PageHeader({
         )}
         <h1
           className={cn(
-            'font-heading flex-1 truncate text-lg font-bold',
-            back ? 'text-center' : 'pl-2 text-left',
+            'font-heading flex flex-1 items-center gap-2 truncate text-lg font-bold',
+            back ? 'justify-center' : 'pl-2',
           )}
         >
           {title}

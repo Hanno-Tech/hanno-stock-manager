@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ScanLine, ChevronRight, Plus } from 'lucide-react';
-import { PageHeader, Mono } from '@/components';
+import { PageHeader, Mono, Logo } from '@/components';
 import { buttonVariants } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import DashboardSearch from '@/features/dashboard/DashboardSearch';
@@ -18,7 +18,14 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Estoque Rápido" />
+      <PageHeader
+        title={
+          <>
+            <Logo className="size-7" />
+            Doca
+          </>
+        }
+      />
 
       {/* Faixa amarela contínua com o header: os números do dia em tipografia
           pesada sobre a cor da marca, como as telas de resumo do Tetris. */}

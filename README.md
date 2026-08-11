@@ -1,7 +1,9 @@
-# Estoque Rápido
+# Doca App
 
-App **mobile-first** de gestão de estoque de galpão (StockScan Flow).
-Stack: **Next.js 16 (App Router) · React 19 · TypeScript · MUI v9 · PostgreSQL 16 · Drizzle ORM · Node 24 LTS**.
+App **mobile-first** para agências de retirada do Mercado Livre: recebe o pacote,
+guarda num local nomeado ("Estante 1", "Caixa 2") e acha na hora em que o cliente
+chega para retirar.
+Stack: **Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 + shadcn/ui (Base UI) · PostgreSQL 16 · Drizzle ORM · Node 24 LTS**.
 
 📄 Planejamento: [`docs/PLAN.md`](docs/PLAN.md) · Modelo de dados: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 

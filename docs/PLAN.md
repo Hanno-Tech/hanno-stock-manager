@@ -1,4 +1,4 @@
-# Estoque Rápido — Plano de Desenvolvimento
+# Doca App — Plano de Desenvolvimento
 
 > App **mobile-first** de gestão de estoque de galpão. Origem do design: [Stitch — StockScan Flow](https://stitch.withgoogle.com/projects/4439944846464774021).
 > Perfil de usuário: operadores de galpão e supervisores de piso — navegação "de uma mão só", leitura de dados imediata, foco em velocidade de escaneamento.

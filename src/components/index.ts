@@ -1,5 +1,6 @@
 export { default as AppShell } from './AppShell';
 export { default as PageHeader } from './PageHeader';
+export { default as Logo } from './Logo';
 export { default as Mono } from './Mono';
 export { default as StatusPill } from './StatusPill';
 export { default as SearchBar } from './SearchBar';

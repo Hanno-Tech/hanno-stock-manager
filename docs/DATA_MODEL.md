@@ -1,4 +1,4 @@
-# Modelo de Dados — Estoque Rápido
+# Modelo de Dados — Doca App
 
 Postgres 16 + Drizzle ORM. Convenções: `snake_case`, PKs `uuid` (default `gen_random_uuid()`), timestamps `timestamptz`.
 

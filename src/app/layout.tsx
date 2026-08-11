@@ -4,16 +4,11 @@ import '@fontsource-variable/jetbrains-mono';
 import './globals.css';
 import Providers from './providers';
 import ServiceWorker from '@/components/ServiceWorker';
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
 export const metadata: Metadata = {
-  title: 'Estoque Rápido',
-  description: 'Gestão de estoque de galpão — rápida e mobile-first.',
+  title: 'Doca App',
+  description: 'Gestão de mercadorias para agências de retirada — mobile-first.',
   manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Estoque Rápido' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Doca App' },
   icons: {
     icon: '/icon-192.png',
     apple: '/apple-touch-icon.png',
@@ -29,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={cn("font-sans", geist.variable)}>
+    <html lang="pt-BR">
       <body>
         <Providers>{children}</Providers>
         <ServiceWorker />

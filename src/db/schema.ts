@@ -1,5 +1,5 @@
 /**
- * Schema do banco (Drizzle ORM) — Estoque Rápido.
+ * Schema do banco (Drizzle ORM) — Doca App.
  * Ver docs/DATA_MODEL.md para a documentação do modelo.
  */
 import { relations } from 'drizzle-orm';
