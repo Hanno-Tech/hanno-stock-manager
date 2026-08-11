@@ -1,15 +1,10 @@
 'use client';
 
-import InputAdornment from '@mui/material/InputAdornment';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import SearchIcon from '@mui/icons-material/Search';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import { Search, ScanLine } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
-/**
- * Barra de busca persistente (altura mínima 56px) com ícone de "scan"
- * na borda direita para acesso rápido à câmera/leitor.
- */
+/** Barra de busca com atalho para a câmera na borda direita. */
 export default function SearchBar({
   value,
   onChange,
@@ -22,28 +17,30 @@ export default function SearchBar({
   placeholder?: string;
 }) {
   return (
-    <TextField
-      fullWidth
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      placeholder={placeholder}
-      slotProps={{
-        input: {
-          sx: { minHeight: 56, borderRadius: 2, bgcolor: 'background.paper' },
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon color="action" />
-            </InputAdornment>
-          ),
-          endAdornment: onScan ? (
-            <InputAdornment position="end">
-              <IconButton aria-label="Escanear código" onClick={onScan} edge="end">
-                <QrCodeScannerIcon color="primary" />
-              </IconButton>
-            </InputAdornment>
-          ) : undefined,
-        },
-      }}
-    />
+    <div className="relative">
+      <Search
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+      />
+      <Input
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder={placeholder}
+        inputMode="search"
+        className={`h-14 bg-card pl-11 ${onScan ? 'pr-14' : ''}`}
+      />
+      {onScan && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Escanear código"
+          onClick={onScan}
+          className="absolute top-1/2 right-1.5 -translate-y-1/2 text-primary"
+        >
+          <ScanLine className="size-5" />
+        </Button>
+      )}
+    </div>
   );
 }

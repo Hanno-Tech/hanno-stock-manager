@@ -46,7 +46,7 @@ export async function getDeliveryStats(ownerId: string): Promise<{ today: number
 export type DeliveryRow = {
   id: string;
   trackingCode: string;
-  sizeCode: 'P' | 'M' | 'G';
+  sizeCode: 'P' | 'M' | 'G' | null;
   deliveredTo: string | null;
   createdAt: Date;
 };
@@ -63,6 +63,29 @@ export async function listDeliveries(ownerId: string, limit = 50): Promise<Deliv
     .from(movements)
     .innerJoin(items, eq(movements.itemId, items.id))
     .where(and(eq(movements.type, 'ENTREGA'), eq(items.ownerId, ownerId)))
+    .orderBy(desc(movements.createdAt))
+    .limit(limit);
+}
+
+export type RecentActivity = {
+  id: string;
+  type: 'ENTRADA' | 'ENTREGA' | 'REPOSICIONAMENTO';
+  trackingCode: string;
+  createdAt: Date;
+};
+
+/** Últimas movimentações do usuário, de qualquer tipo. */
+export async function listRecentActivity(ownerId: string, limit = 8): Promise<RecentActivity[]> {
+  return db
+    .select({
+      id: movements.id,
+      type: movements.type,
+      trackingCode: items.trackingCode,
+      createdAt: movements.createdAt,
+    })
+    .from(movements)
+    .innerJoin(items, eq(movements.itemId, items.id))
+    .where(eq(items.ownerId, ownerId))
     .orderBy(desc(movements.createdAt))
     .limit(limit);
 }

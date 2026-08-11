@@ -1,127 +1,166 @@
-'use client';
+"use client";
 
-import { useActionState, useEffect, useState, useTransition } from 'react';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import Typography from '@mui/material/Typography';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import SaveIcon from '@mui/icons-material/Save';
-import { SegmentedControl, Mono, BarcodeScanner } from '@/components';
-import { receiveItem, suggestPosition, type ReceiveState } from './actions';
-import type { SuggestedPosition } from './receive';
+import { useActionState, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
+import { MapPin, ScanLine, Save, TriangleAlert } from "lucide-react";
+import { Mono, BarcodeScanner } from "@/components";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { KIND_ICON, storedLabel } from "@/features/locations/format";
+import type { LocationSummary } from "@/features/locations/queries";
+import { receiveItem, suggestPosition, type ReceiveState } from "./actions";
+import type { SuggestedPosition } from "./receive";
 
-type Size = 'P' | 'M' | 'G';
-
-export default function ReceberForm() {
-  const [state, formAction, saving] = useActionState<ReceiveState, FormData>(receiveItem, {});
-  const [size, setSize] = useState<Size>('M');
-  const [code, setCode] = useState('');
+export default function ReceberForm({
+  locations,
+}: {
+  locations: LocationSummary[];
+}) {
+  const [state, formAction, saving] = useActionState<ReceiveState, FormData>(
+    receiveItem,
+    {},
+  );
+  const [locationId, setLocationId] = useState(locations[0]?.id ?? "");
+  const [code, setCode] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestedPosition | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
     startTransition(async () => {
-      setSuggestion(await suggestPosition(size));
+      setSuggestion(locationId ? await suggestPosition(locationId) : null);
     });
-  }, [size]);
+  }, [locationId]);
+
+  if (locations.length === 0) {
+    return (
+      <div className="rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
+        <p className="font-semibold">Nenhum local com vaga livre</p>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">
+          Cadastre um local de guarda antes de receber mercadorias.
+        </p>
+        <Link href="/app/locais/novo" className={buttonVariants()}>
+          Cadastrar local
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <Box component="form" action={formAction} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {state.error && <Alert severity="error">{state.error}</Alert>}
+    <form action={formAction} className="flex flex-col gap-6">
+      {state.error && (
+        <p className="flex items-start gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-900">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          {state.error}
+        </p>
+      )}
 
-      <Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Código lido
-        </Typography>
-        <TextField
-          name="trackingCode"
-          placeholder="ML-987234-A"
-          required
-          fullWidth
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          slotProps={{
-            htmlInput: { style: { fontFamily: '"JetBrains Mono Variable", monospace' } },
-            input: {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton aria-label="Escanear código" onClick={() => setScannerOpen(true)} edge="end">
-                    <QrCodeScannerIcon color="primary" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-      </Box>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="trackingCode">Código lido</Label>
+        <div className="relative">
+          <Input
+            id="trackingCode"
+            name="trackingCode"
+            placeholder="ML-987234-A"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="pr-14 font-mono"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Escanear código"
+            onClick={() => setScannerOpen(true)}
+            className="absolute top-1/2 right-1 -translate-y-1/2 text-primary"
+          >
+            <ScanLine className="size-5" />
+          </Button>
+        </div>
+      </div>
 
-      <Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Tamanho
-        </Typography>
-        <input type="hidden" name="size" value={size} />
-        <SegmentedControl<Size>
-          value={size}
-          onChange={setSize}
-          options={[
-            { value: 'P', label: 'P' },
-            { value: 'M', label: 'M' },
-            { value: 'G', label: 'G' },
-          ]}
-          ariaLabel="Tamanho do item"
-        />
-      </Box>
-
-      <Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Posição sugerida
-        </Typography>
-        <Card
-          sx={{
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            bgcolor: suggestion ? 'secondary.light' : 'action.hover',
-            borderColor: 'transparent',
-          }}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="locationId">Guardar em</Label>
+        <Select
+          name="locationId"
+          value={locationId}
+          onValueChange={(v) => setLocationId(v ?? "")}
         >
-          <PlaceOutlinedIcon color={suggestion ? 'success' : 'disabled'} />
-          {suggestion ? (
-            <Box>
-              <Mono variant="body1" sx={{ fontWeight: 700 }}>
-                {suggestion.shelfCode} · {suggestion.label}
-              </Mono>
-              <Typography variant="body2" color="text.secondary">
-                {suggestion.aisle ? `Corredor ${suggestion.aisle}` : 'Sem corredor'}
-                {suggestion.level ? `, Nível ${suggestion.level}` : ''}
-              </Typography>
-            </Box>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Sem posições livres para o tamanho {size}
-            </Typography>
-          )}
-        </Card>
-      </Box>
+          <SelectTrigger id="locationId" className="w-full">
+            {/* O valor é o UUID do local; sem este map o gatilho mostraria o id cru. */}
+            <SelectValue>
+              {(v) => locations.find((l) => l.id === v)?.name ?? 'Escolha um local'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {locations.map((l) => {
+              const KindIcon = KIND_ICON[l.kind];
+              return (
+                <SelectItem key={l.id} value={l.id}>
+                  <KindIcon className="size-4" />
+                  {l.name}
+                  <span className="text-muted-foreground">
+                    ({storedLabel(l.stored)})
+                  </span>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <TextField name="note" label="Nome do cliente / Obs (opcional)" fullWidth multiline minRows={1} />
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium">Vaga sugerida</span>
+        <div
+          className={`flex items-center gap-3 rounded-xl p-4 ${
+            suggestion ? "bg-emerald-50 ring-1 ring-emerald-200" : "bg-muted"
+          }`}
+        >
+          <MapPin
+            className={`size-5 shrink-0 ${suggestion ? "text-ml-success" : "text-muted-foreground"}`}
+          />
+          {suggestion ? (
+            <div className="min-w-0">
+              <Mono className="block font-bold">
+                {suggestion.locationName} · vaga {suggestion.label}
+              </Mono>
+              {suggestion.hint && (
+                <p className="truncate text-sm text-muted-foreground">
+                  {suggestion.hint}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Este local está cheio. Escolha outro.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="note">Nome do cliente / Obs (opcional)</Label>
+        <Textarea id="note" name="note" rows={2} />
+      </div>
 
       <Button
         type="submit"
-        variant="contained"
-        size="large"
+        size="lg"
         disabled={saving || !suggestion}
-        startIcon={<SaveIcon />}
+        className="w-full"
       >
-        {saving ? 'Salvando...' : 'Salvar Entrada'}
+        <Save />
+        {saving ? "Salvando..." : "Salvar Entrada"}
       </Button>
 
       <BarcodeScanner
@@ -129,6 +168,6 @@ export default function ReceberForm() {
         onClose={() => setScannerOpen(false)}
         onDetected={(c) => setCode(c)}
       />
-    </Box>
+    </form>
   );
 }

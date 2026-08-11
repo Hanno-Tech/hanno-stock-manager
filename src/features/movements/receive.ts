@@ -1,39 +1,46 @@
 import 'server-only';
 import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { positions, shelves, sizeCategories } from '@/db/schema';
+import { positions, storageLocations } from '@/db/schema';
 
 export type SuggestedPosition = {
   positionId: string;
   label: string;
-  shelfCode: string;
-  aisle: string | null;
-  level: number | null;
+  locationId: string;
+  locationName: string;
+  hint: string | null;
 };
 
 /**
- * Sugere a primeira posição livre numa estante da categoria compatível
- * com o tamanho (P→Pequeno, M→Médio, G→Grande).
+ * Sugere a primeira vaga livre.
+ *
+ * Com locais nomeados livremente não existe mais um critério automático de
+ * "que local combina com este item" — quem sabe isso é o operador. Então:
+ * se ele escolheu um local, sugerimos a primeira vaga livre lá dentro;
+ * se não escolheu, caímos no primeiro local (por ordem) que ainda tem espaço.
  */
-export async function suggestPositionForSize(
-  size: 'P' | 'M' | 'G',
+export async function suggestFreePosition(
   ownerId: string,
+  locationId?: string,
 ): Promise<SuggestedPosition | null> {
   const [row] = await db
     .select({
       positionId: positions.id,
       label: positions.label,
-      shelfCode: shelves.code,
-      aisle: shelves.aisle,
-      level: shelves.level,
+      locationId: storageLocations.id,
+      locationName: storageLocations.name,
+      hint: storageLocations.hint,
     })
     .from(positions)
-    .innerJoin(shelves, eq(positions.shelfId, shelves.id))
-    .innerJoin(sizeCategories, eq(shelves.categoryId, sizeCategories.id))
+    .innerJoin(storageLocations, eq(positions.locationId, storageLocations.id))
     .where(
-      and(eq(sizeCategories.code, size), eq(positions.status, 'LIVRE'), eq(shelves.ownerId, ownerId)),
+      and(
+        eq(positions.status, 'LIVRE'),
+        eq(storageLocations.ownerId, ownerId),
+        ...(locationId ? [eq(storageLocations.id, locationId)] : []),
+      ),
     )
-    .orderBy(asc(shelves.aisle), asc(shelves.level), asc(positions.slotNumber))
+    .orderBy(asc(storageLocations.sortOrder), asc(storageLocations.name), asc(positions.slotNumber))
     .limit(1);
   return row ?? null;
 }

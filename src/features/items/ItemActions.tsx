@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
+import { CircleCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { confirmDelivery } from '@/features/movements/actions';
 
 export default function ItemActions({ itemId }: { itemId: string }) {
@@ -24,38 +27,50 @@ export default function ItemActions({ itemId }: { itemId: string }) {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+    <>
       <Button
-        variant="contained"
-        color="secondary"
-        size="large"
-        startIcon={<CheckCircleOutlineIcon />}
+        size="lg"
+        className="w-full bg-ml-success-action text-white hover:bg-ml-success-action/90"
         onClick={() => setOpen(true)}
       >
+        <CircleCheck />
         Confirmar Entrega
       </Button>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>Confirmar entrega</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="Entregue a (opcional)"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            sx={{ mt: 1 }}
-          />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirmar entrega</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="deliveredTo">Entregue a (opcional)</Label>
+            <Input
+              id="deliveredTo"
+              autoFocus
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={submit}
+              disabled={pending}
+              className="bg-ml-success-action text-white hover:bg-ml-success-action/90"
+            >
+              {pending ? 'Confirmando...' : 'Confirmar'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)} disabled={pending}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} variant="contained" color="secondary" disabled={pending}>
-            {pending ? 'Confirmando...' : 'Confirmar'}
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 }

@@ -1,7 +1,4 @@
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
+import { CircleCheck } from 'lucide-react';
 import { PageHeader, Mono, StatusPill } from '@/components';
 import { getDeliveryStats, listDeliveries, type DeliveryRow } from '@/features/history/queries';
 import { requireUser } from '@/features/auth/queries';
@@ -40,67 +37,49 @@ export default async function HistoricoPage() {
   return (
     <>
       <PageHeader title="Histórico" />
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Card sx={{ flex: 1, p: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Entregues hoje
-            </Typography>
-            <Mono variant="h1" color="primary" sx={{ fontWeight: 700 }}>
-              {stats.today}
-            </Mono>
-          </Card>
-          <Card sx={{ flex: 1, p: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Este mês
-            </Typography>
-            <Mono variant="h1" sx={{ fontWeight: 700 }}>
-              {stats.month}
-            </Mono>
-          </Card>
-        </Box>
+      <div className="flex flex-col gap-6 p-4">
+        <div className="flex gap-3">
+          <div className="flex-1 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+            <p className="text-sm text-muted-foreground">Entregues hoje</p>
+            <Mono className="text-3xl font-bold text-primary">{stats.today}</Mono>
+          </div>
+          <div className="flex-1 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+            <p className="text-sm text-muted-foreground">Este mês</p>
+            <Mono className="text-3xl font-bold">{stats.month}</Mono>
+          </div>
+        </div>
 
         {deliveries.length === 0 && (
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 4, textAlign: 'center' }}>
-            Nenhuma entrega registrada.
-          </Typography>
+          <p className="mt-8 text-center text-muted-foreground">Nenhuma entrega registrada.</p>
         )}
 
         {groups.map((g) => (
-          <Box key={g.bucket}>
-            <Typography variant="overline" color="text.secondary">
+          <section key={g.bucket}>
+            <h2 className="text-[0.6875rem] font-bold tracking-wider text-muted-foreground uppercase">
               {g.bucket}
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+            </h2>
+            <ul className="mt-2 flex flex-col gap-2">
               {g.rows.map((r) => (
-                <Card key={r.id} sx={{ p: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Mono variant="body1" sx={{ fontWeight: 700 }}>
-                      {r.trackingCode}
-                    </Mono>
-                    <Typography variant="body2" color="text.secondary">
-                      {time(r.createdAt)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                    <StatusPill label={r.sizeCode} tone="info" />
-                    {r.deliveredTo ? (
-                      <Typography variant="body2" color="text.secondary">
-                        Entregue a: {r.deliveredTo}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                        Sem registro
-                      </Typography>
-                    )}
-                    <CheckCircleOutlineIcon color="success" fontSize="small" sx={{ ml: 'auto' }} />
-                  </Box>
-                </Card>
+                <li key={r.id} className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+                  <div className="flex items-center justify-between">
+                    <Mono className="font-bold">{r.trackingCode}</Mono>
+                    <span className="text-sm text-muted-foreground">{time(r.createdAt)}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    {r.sizeCode && <StatusPill label={r.sizeCode} tone="info" />}
+                    <span
+                      className={`text-sm text-muted-foreground ${r.deliveredTo ? '' : 'italic'}`}
+                    >
+                      {r.deliveredTo ? `Entregue a: ${r.deliveredTo}` : 'Sem registro'}
+                    </span>
+                    <CircleCheck className="ml-auto size-4 shrink-0 text-ml-success" />
+                  </div>
+                </li>
               ))}
-            </Box>
-          </Box>
+            </ul>
+          </section>
         ))}
-      </Box>
+      </div>
     </>
   );
 }

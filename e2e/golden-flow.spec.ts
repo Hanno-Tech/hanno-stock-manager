@@ -16,24 +16,34 @@ test('fluxo dourado: login → receber → entregar → histórico', async ({ pa
   await page.getByRole('link', { name: 'Receber Mercadoria' }).click();
   await expect(page).toHaveURL(/\/app\/receber$/);
   await page.getByPlaceholder('ML-987234-A').fill(code);
-  // tamanho M já é o padrão; espera a posição sugerida habilitar o botão
+  // o primeiro local já vem selecionado; espera a vaga sugerida habilitar o botão
   const salvar = page.getByRole('button', { name: 'Salvar Entrada' });
   await expect(salvar).toBeEnabled({ timeout: 15_000 });
   await salvar.click();
   await expect(page).toHaveURL(/\/app$/);
 
-  // 3. Buscar o item recém-criado e abrir o detalhe
+  // 3. Clicar no local no dashboard mostra as mercadorias guardadas nele.
+  // Espera a lista hidratar: clicar durante a hidratação pós-redirect é no-op.
+  await expect(page.getByRole('heading', { name: 'Seus locais' })).toBeVisible();
+  const localCard = page.getByRole('link').filter({ hasText: 'Estante 1' }).first();
+  await expect(localCard).toBeVisible();
+  await localCard.click();
+  await expect(page).toHaveURL(/\/app\/locais\//);
+  await expect(page.getByText('Mercadorias aqui')).toBeVisible();
+  await expect(page.getByText(code)).toBeVisible();
+
+  // 4. Buscar o item recém-criado e abrir o detalhe
   await page.goto(`/app/buscar?q=${encodeURIComponent(code)}`);
   await page.getByRole('link').filter({ hasText: code }).first().click();
   await expect(page).toHaveURL(/\/app\/itens\//);
   await expect(page.getByText('Aguardando Retirada')).toBeVisible();
 
-  // 4. Confirmar entrega
+  // 5. Confirmar entrega
   await page.getByRole('button', { name: 'Confirmar Entrega' }).click();
   await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
   await expect(page.getByText('Entregue', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
 
-  // 5. Aparece no histórico
+  // 6. Aparece no histórico
   await page.goto('/app/historico');
   await expect(page.getByText(code)).toBeVisible();
 });

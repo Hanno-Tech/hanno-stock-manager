@@ -1,5 +1,5 @@
 {
-  "id": "c7a813a3-b61c-4127-95fa-ec2da02512ec",
+  "id": "4ca87f72-2565-4f34-9b17-6aee27fbe768",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -15,6 +15,12 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "tracking_code": {
           "name": "tracking_code",
           "type": "text",
@@ -26,7 +32,7 @@
           "type": "size",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "status": {
           "name": "status",
@@ -76,6 +82,19 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "item_owner_id_user_id_fk": {
+          "name": "item_owner_id_user_id_fk",
+          "tableFrom": "item",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "item_position_id_position_id_fk": {
           "name": "item_position_id_position_id_fk",
           "tableFrom": "item",
@@ -92,10 +111,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "item_tracking_code_unique": {
-          "name": "item_tracking_code_unique",
+        "uq_item_owner_tracking": {
+          "name": "uq_item_owner_tracking",
           "nullsNotDistinct": false,
           "columns": [
+            "owner_id",
             "tracking_code"
           ]
         }
@@ -232,8 +252,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "shelf_id": {
-          "name": "shelf_id",
+        "location_id": {
+          "name": "location_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -261,12 +281,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "position_shelf_id_shelf_id_fk": {
-          "name": "position_shelf_id_shelf_id_fk",
+        "position_location_id_storage_location_id_fk": {
+          "name": "position_location_id_storage_location_id_fk",
           "tableFrom": "position",
-          "tableTo": "shelf",
+          "tableTo": "storage_location",
           "columnsFrom": [
-            "shelf_id"
+            "location_id"
           ],
           "columnsTo": [
             "id"
@@ -281,7 +301,7 @@
           "name": "uq_position_slot",
           "nullsNotDistinct": false,
           "columns": [
-            "shelf_id",
+            "location_id",
             "slot_number"
           ]
         }
@@ -290,8 +310,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.shelf": {
-      "name": "shelf",
+    "public.storage_location": {
+      "name": "storage_location",
       "schema": "",
       "columns": {
         "id": {
@@ -301,27 +321,29 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "code": {
-          "name": "code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "category_id": {
-          "name": "category_id",
+        "owner_id": {
+          "name": "owner_id",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "aisle": {
-          "name": "aisle",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "level": {
-          "name": "level",
-          "type": "integer",
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "location_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ESTANTE'"
+        },
+        "hint": {
+          "name": "hint",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -330,6 +352,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -348,87 +377,28 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "shelf_category_id_size_category_id_fk": {
-          "name": "shelf_category_id_size_category_id_fk",
-          "tableFrom": "shelf",
-          "tableTo": "size_category",
+        "storage_location_owner_id_user_id_fk": {
+          "name": "storage_location_owner_id_user_id_fk",
+          "tableFrom": "storage_location",
+          "tableTo": "user",
           "columnsFrom": [
-            "category_id"
+            "owner_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "shelf_code_unique": {
-          "name": "shelf_code_unique",
+        "uq_location_owner_name": {
+          "name": "uq_location_owner_name",
           "nullsNotDistinct": false,
           "columns": [
-            "code"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.size_category": {
-      "name": "size_category",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "code": {
-          "name": "code",
-          "type": "size",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "max_weight_kg": {
-          "name": "max_weight_kg",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "size_category_code_unique": {
-          "name": "size_category_code_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "code"
+            "owner_id",
+            "name"
           ]
         }
       },
@@ -515,6 +485,18 @@
       "values": [
         "AGUARDANDO_RETIRADA",
         "ENTREGUE"
+      ]
+    },
+    "public.location_kind": {
+      "name": "location_kind",
+      "schema": "public",
+      "values": [
+        "ESTANTE",
+        "CAIXA",
+        "PRATELEIRA",
+        "PALLET",
+        "ARMARIO",
+        "OUTRO"
       ]
     },
     "public.movement_type": {

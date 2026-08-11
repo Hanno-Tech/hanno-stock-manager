@@ -1,52 +1,66 @@
 'use client';
 
 import { useActionState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import Link from '@mui/material/Link';
+import Link from 'next/link';
+import { TriangleAlert, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { loginAction, type ActionState } from '@/features/auth/actions';
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(loginAction, {});
 
   return (
-    <Box>
-      <Typography variant="h1" color="primary" sx={{ mb: 1 }}>
-        Estoque Rápido
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Entre para gerenciar seu estoque.
-      </Typography>
+    <div>
+      {/* Amarelo ML com texto quase-preto — a única combinação legível (13.7:1). */}
+      <div className="mb-6 inline-flex items-center rounded-xl bg-ml-yellow px-4 py-2">
+        <span className="font-heading text-xl font-bold text-ml-yellow-on">Estoque Rápido</span>
+      </div>
+      <p className="mb-8 text-muted-foreground">Entre para gerenciar seu estoque.</p>
 
-      <Box component="form" action={formAction} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {state.error && <Alert severity="error">{state.error}</Alert>}
-        <TextField name="email" label="E-mail" type="email" autoComplete="email" required fullWidth />
-        <TextField
-          name="password"
-          label="Senha"
-          type="password"
-          autoComplete="current-password"
-          required
-          fullWidth
-        />
-        <Button type="submit" variant="contained" size="large" disabled={pending} sx={{ mt: 1 }}>
+      <form action={formAction} className="flex flex-col gap-4">
+        {state.error && (
+          <p className="flex items-start gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-900">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            {state.error}
+          </p>
+        )}
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">E-mail</Label>
+          <Input id="email" name="email" type="email" autoComplete="email" required />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="password">Senha</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
+        </div>
+
+        <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
           {pending ? 'Entrando...' : 'Entrar'}
         </Button>
-      </Box>
+      </form>
 
-      <Typography variant="body2" sx={{ mt: 3, textAlign: 'center' }}>
+      <p className="mt-6 text-center text-sm">
         Não tem conta?{' '}
-        <Link href="/cadastro" sx={{ fontWeight: 700 }}>
+        <Link href="/cadastro" className="font-bold text-ml-blue-strong hover:underline">
           Cadastre-se
         </Link>
-      </Typography>
+      </p>
 
-      <Alert severity="info" sx={{ mt: 4 }}>
-        Demo: <strong>operador@estoque.dev</strong> / <strong>senha123</strong>
-      </Alert>
-    </Box>
+      <p className="mt-8 flex items-start gap-2 rounded-lg bg-accent p-3 text-sm text-accent-foreground">
+        <Info className="mt-0.5 size-4 shrink-0" />
+        <span>
+          Demo: <strong>operador@estoque.dev</strong> / <strong>senha123</strong>
+        </span>
+      </p>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, count, eq, gte } from 'drizzle-orm';
 import { db } from '@/db';
-import { items, movements, shelves } from '@/db/schema';
+import { items, movements, storageLocations } from '@/db/schema';
 
 function startOfToday(): Date {
   const d = new Date();
@@ -12,14 +12,13 @@ function startOfToday(): Date {
 export type DashboardStats = {
   totalInStock: number;
   receivedToday: number;
-  bySize: { P: number; M: number; G: number };
 };
 
 /** KPIs do dashboard, sempre escopados ao usuário dono. */
 export async function getDashboardStats(ownerId: string): Promise<DashboardStats> {
   const inStock = and(eq(items.status, 'AGUARDANDO_RETIRADA'), eq(items.ownerId, ownerId));
 
-  const [[total], received, sizes] = await Promise.all([
+  const [[total], received] = await Promise.all([
     db.select({ n: count() }).from(items).where(inStock),
     db
       .select({ n: count() })
@@ -32,24 +31,19 @@ export async function getDashboardStats(ownerId: string): Promise<DashboardStats
           eq(items.ownerId, ownerId),
         ),
       ),
-    db.select({ size: items.sizeCode, n: count() }).from(items).where(inStock).groupBy(items.sizeCode),
   ]);
-
-  const bySize = { P: 0, M: 0, G: 0 };
-  for (const row of sizes) bySize[row.size] = row.n;
 
   return {
     totalInStock: total?.n ?? 0,
     receivedToday: received[0]?.n ?? 0,
-    bySize,
   };
 }
 
-/** Total de estantes do usuário. */
-export async function getShelfCount(ownerId: string): Promise<number> {
+/** Total de locais de guarda do usuário. */
+export async function getLocationCount(ownerId: string): Promise<number> {
   const [row] = await db
     .select({ n: count() })
-    .from(shelves)
-    .where(eq(shelves.ownerId, ownerId));
+    .from(storageLocations)
+    .where(eq(storageLocations.ownerId, ownerId));
   return row?.n ?? 0;
 }

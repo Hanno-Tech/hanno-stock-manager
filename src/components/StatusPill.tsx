@@ -1,40 +1,41 @@
-import Chip from '@mui/material/Chip';
+import { cn } from '@/lib/utils';
 
 type Tone = 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
-const toneStyles: Record<Tone, { bg: string; fg: string }> = {
-  success: { bg: '#6cf8bb', fg: '#00714d' },
-  warning: { bg: '#ffddb8', fg: '#653e00' },
-  error: { bg: '#ffdad6', fg: '#93000a' },
-  info: { bg: '#dbe1ff', fg: '#003ea8' },
-  neutral: { bg: '#e5eeff', fg: '#434655' },
+/**
+ * Cada tom usa fundo claro + texto escuro da mesma família. Nunca o inverso:
+ * os fills de marca do ML (verde/vermelho/amarelo) reprovam AA com texto branco.
+ */
+const toneClass: Record<Tone, string> = {
+  success: 'bg-emerald-100 text-emerald-900',
+  warning: 'bg-amber-100 text-amber-900',
+  error: 'bg-red-100 text-red-900',
+  info: 'bg-blue-100 text-blue-900',
+  neutral: 'bg-secondary text-secondary-foreground',
 };
 
-/** Pill totalmente arredondada para status (Aguardando Retirada, Entregue, Baixo Estoque…). */
+/** Pill de status (Aguardando Retirada, Entregue…). */
 export default function StatusPill({
   label,
   tone = 'neutral',
   icon,
+  className,
 }: {
   label: string;
   tone?: Tone;
-  icon?: React.ReactElement;
+  icon?: React.ReactNode;
+  className?: string;
 }) {
-  const c = toneStyles[tone];
   return (
-    <Chip
-      label={label}
-      icon={icon}
-      size="small"
-      sx={{
-        bgcolor: c.bg,
-        color: c.fg,
-        fontWeight: 700,
-        fontSize: '0.6875rem',
-        letterSpacing: '0.03em',
-        borderRadius: 999,
-        '& .MuiChip-icon': { color: c.fg },
-      }}
-    />
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.6875rem] font-bold tracking-wide',
+        toneClass[tone],
+        className,
+      )}
+    >
+      {icon}
+      {label}
+    </span>
   );
 }

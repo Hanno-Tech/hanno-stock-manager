@@ -1,18 +1,248 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+ * Paleta Mercado Livre.
+ *
+ * Os hex vêm do CSS de produção do mercadolivre.com.br (o Andes, design system
+ * do ML, não é público). Os contrastes abaixo foram CALCULADOS pela fórmula
+ * WCAG 2.1 — não estime "no olho", as duas armadilhas são reais:
+ *
+ *   #FFE600 + branco  = 1.27:1  ← ilegível. O amarelo SÓ aceita texto escuro.
+ *   #3483FA + branco  = 3.64:1  ← reprova AA para texto normal (precisa 4.5).
+ *   #2968C8 + branco  = 5.37:1  ✓ é por isso que existe --ml-blue-action.
+ *
+ * Regra: azul claro é decoração (ícone, borda, foco); azul escuro é ação.
+ * ------------------------------------------------------------------------- */
 :root {
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+
+  --ml-yellow: #ffe600;
+  --ml-yellow-on: #1a1a1a; /* 13.73:1 sobre o amarelo */
+  --ml-blue-accent: #3483fa; /* só fill/ícone/borda — nunca texto branco em cima */
+  --ml-blue-action: #2968c8; /* 5.37:1 com branco — botões */
+  --ml-blue-strong: #1259c3; /* 6.48:1 sobre branco — links */
+  --ml-success: #00a650; /* fill/ícone — 3.20:1 com branco, NÃO serve para texto */
+  --ml-success-action: #00803d; /* 5.05:1 com branco — botões de confirmar */
+  --ml-danger: #f23d4f;
+
+  --background: #f5f5f5;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  --primary: var(--ml-blue-action);
+  --primary-foreground: #ffffff;
+  --secondary: #ededed;
+  --secondary-foreground: #1a1a1a;
+
+  --muted: #ededed;
+  /* #4B4B4B e não #737373: o cinza do ML cai para 3.87:1 sobre superfície
+     glass/cinza e reprovaria AA. Este mantém 7.12:1 no pior caso. */
+  --muted-foreground: #4b4b4b;
+
+  --accent: #e8f0fe;
+  --accent-foreground: var(--ml-blue-action);
+  --destructive: var(--ml-danger);
+
+  --border: #dedede;
+  --input: #bfbfbf;
+  --ring: var(--ml-blue-accent);
+
+  --radius: 0.75rem;
+
+  /* Superfície glass — usar com parcimônia (ver .glass abaixo). */
+  --glass-bg: rgb(255 255 255 / 0.72);
+  --glass-border: rgb(255 255 255 / 0.5);
+
+  --chart-1: var(--ml-blue-action);
+  --chart-2: var(--ml-success);
+  --chart-3: var(--ml-yellow);
+  --chart-4: var(--ml-blue-accent);
+  --chart-5: var(--ml-danger);
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: var(--ml-blue-action);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8f0fe;
+  --sidebar-accent-foreground: var(--ml-blue-action);
+  --sidebar-border: #dedede;
+  --sidebar-ring: var(--ml-blue-accent);
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+.dark {
+  --background: #121212;
+  --foreground: #f5f5f5;
+  --card: #1e1e1e;
+  --card-foreground: #f5f5f5;
+  --popover: #1e1e1e;
+  --popover-foreground: #f5f5f5;
+
+  /* No escuro o azul claro passa (6.00:1 sobre #121212) e lê melhor. */
+  --primary: #4a90ff;
+  --primary-foreground: #121212;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #f5f5f5;
+
+  --muted: #2a2a2a;
+  --muted-foreground: #b0b0b0;
+
+  --accent: #1e3a5f;
+  --accent-foreground: #4a90ff;
+  --destructive: #ff5c6b;
+
+  --border: rgb(255 255 255 / 0.12);
+  --input: rgb(255 255 255 / 0.18);
+  --ring: #4a90ff;
+
+  --glass-bg: rgb(30 30 30 / 0.72);
+  --glass-border: rgb(255 255 255 / 0.1);
+
+  --sidebar: #1e1e1e;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #4a90ff;
+  --sidebar-primary-foreground: #121212;
+  --sidebar-accent: #1e3a5f;
+  --sidebar-accent-foreground: #4a90ff;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-ring: #4a90ff;
 }
 
-* {
-  box-sizing: border-box;
+@theme inline {
+  --font-sans:
+    'Hanken Grotesk Variable', 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --color-ml-yellow: var(--ml-yellow);
+  --color-ml-yellow-on: var(--ml-yellow-on);
+  --color-ml-blue-accent: var(--ml-blue-accent);
+  --color-ml-blue-action: var(--ml-blue-action);
+  --color-ml-blue-strong: var(--ml-blue-strong);
+  --color-ml-success: var(--ml-success);
+  --color-ml-success-action: var(--ml-success-action);
+  --color-ml-danger: var(--ml-danger);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  * {
+    box-sizing: border-box;
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    /* Impede o iOS de inflar o texto ao girar o aparelho. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    max-width: 100vw;
+    overflow-x: hidden;
+    /* O operador toca e arrasta o tempo todo; o realce azul do toque atrapalha. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Campos com menos de 16px fazem o iOS dar zoom ao focar. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+}
+
+@layer utilities {
+  /* Superfície glass. Custa uma cópia + blur do fundo A CADA FRAME, então:
+     use só em elementos fixos e pequenos (header, bottom nav), nunca em item
+     de lista com scroll, e não anime o próprio backdrop-filter. */
+  .glass {
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-color: var(--glass-border);
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass {
+      background-color: var(--card);
+    }
+  }
+
+  .pb-safe {
+    padding-bottom: var(--safe-area-bottom);
+  }
+
+  .pt-safe {
+    padding-top: var(--safe-area-top);
+  }
+
+  /* Alvo de toque mínimo confortável para uso com uma mão. */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

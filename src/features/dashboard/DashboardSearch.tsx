@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Box from '@mui/material/Box';
 import { SearchBar, BarcodeScanner } from '@/components';
 
 /** Busca do dashboard: envia para os resultados por Enter, scan ou toque no ícone. */
@@ -17,8 +16,7 @@ export default function DashboardSearch() {
   };
 
   return (
-    <Box
-      component="form"
+    <form
       onSubmit={(e) => {
         e.preventDefault();
         go(q);
@@ -33,6 +31,6 @@ export default function DashboardSearch() {
           go(c);
         }}
       />
-    </Box>
+    </form>
   );
 }

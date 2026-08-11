@@ -1,78 +1,55 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import BottomNavigation from '@mui/material/BottomNavigation';
-import BottomNavigationAction from '@mui/material/BottomNavigationAction';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined';
-import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { House, ScanLine, Boxes, History, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const TABS = [
-  { label: 'Início', value: '/app', icon: <HomeOutlinedIcon /> },
-  { label: 'Receber', value: '/app/receber', icon: <QrCodeScannerOutlinedIcon /> },
-  { label: 'Estantes', value: '/app/estantes', icon: <WarehouseOutlinedIcon /> },
-  { label: 'Histórico', value: '/app/historico', icon: <HistoryOutlinedIcon /> },
-  { label: 'Perfil', value: '/app/perfil', icon: <PersonOutlineOutlinedIcon /> },
+  { label: 'Início', href: '/app', Icon: House },
+  { label: 'Receber', href: '/app/receber', Icon: ScanLine },
+  { label: 'Locais', href: '/app/locais', Icon: Boxes },
+  { label: 'Histórico', href: '/app/historico', Icon: History },
+  { label: 'Perfil', href: '/app/perfil', Icon: User },
 ];
-
-const NAV_HEIGHT = 64;
 
 /** Casca da área autenticada: conteúdo rolável + navegação inferior fixa (thumb zone). */
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
 
-  // Seleciona a aba pelo prefixo mais específico que casa com a rota atual.
-  const current =
-    TABS.map((t) => t.value)
-      .filter((v) => (v === '/app' ? pathname === '/app' : pathname.startsWith(v)))
-      .sort((a, b) => b.length - a.length)[0] ?? false;
+  // Aba ativa = prefixo mais específico que casa com a rota atual.
+  const active = TABS.map((t) => t.href)
+    .filter((href) => (href === '/app' ? pathname === '/app' : pathname.startsWith(href)))
+    .sort((a, b) => b.length - a.length)[0];
 
   return (
-    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
-      <Box
-        component="main"
-        sx={{ pb: `calc(${NAV_HEIGHT}px + var(--safe-area-bottom) + 16px)`, maxWidth: 480, mx: 'auto' }}
-      >
+    <div className="min-h-dvh bg-background">
+      <main className="mx-auto max-w-[480px] pb-[calc(4rem+var(--safe-area-bottom)+1rem)]">
         {children}
-      </Box>
+      </main>
 
-      <Paper
-        elevation={0}
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          maxWidth: 480,
-          mx: 'auto',
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          pb: 'var(--safe-area-bottom)',
-          zIndex: (t) => t.zIndex.appBar,
-        }}
-      >
-        <BottomNavigation
-          showLabels
-          value={current}
-          onChange={(_, value: string) => router.push(value)}
-          sx={{ height: NAV_HEIGHT, bgcolor: 'background.paper', '& .MuiBottomNavigationAction-label': { fontSize: '0.7rem' } }}
-        >
-          {TABS.map((t) => (
-            <BottomNavigationAction
-              key={t.value}
-              label={t.label}
-              value={t.value}
-              icon={t.icon}
-              sx={{ minWidth: 0 }}
-            />
-          ))}
-        </BottomNavigation>
-      </Paper>
-    </Box>
+      <nav className="glass pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[480px] border-t">
+        <ul className="flex h-16">
+          {TABS.map(({ label, href, Icon }) => {
+            const isActive = active === href;
+            return (
+              <li key={href} className="flex-1">
+                <Link
+                  href={href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'flex h-full flex-col items-center justify-center gap-1 transition-colors',
+                    isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <Icon className={cn('size-6', isActive && 'fill-primary/10')} />
+                  <span className="text-[0.7rem] font-medium">{label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
   );
 }

@@ -5,20 +5,21 @@ import { redirect } from 'next/navigation';
 import { and, asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';
-import { items, positions, movements, shelves, sizeCategories } from '@/db/schema';
+import { items, positions, movements, storageLocations } from '@/db/schema';
 import { getSession } from '@/lib/auth/session';
-import { suggestPositionForSize, type SuggestedPosition } from './receive';
+import { suggestFreePosition, type SuggestedPosition } from './receive';
 
-/** Server action fina para o cliente re-consultar a sugestão ao trocar o tamanho. */
-export async function suggestPosition(size: 'P' | 'M' | 'G'): Promise<SuggestedPosition | null> {
+/** Server action fina para o cliente re-consultar a sugestão ao trocar de local. */
+export async function suggestPosition(locationId?: string): Promise<SuggestedPosition | null> {
   const session = await getSession();
   if (!session) return null;
-  return suggestPositionForSize(size, session.userId);
+  return suggestFreePosition(session.userId, locationId);
 }
 
 const receiveSchema = z.object({
   trackingCode: z.string().min(1, 'Informe o código'),
-  size: z.enum(['P', 'M', 'G']),
+  locationId: z.uuid('Escolha um local').optional(),
+  size: z.enum(['P', 'M', 'G']).optional(),
   note: z.string().optional(),
 });
 
@@ -31,11 +32,12 @@ export type ReceiveState = { error?: string };
 export async function receiveItem(_: ReceiveState, formData: FormData): Promise<ReceiveState> {
   const parsed = receiveSchema.safeParse({
     trackingCode: formData.get('trackingCode'),
-    size: formData.get('size'),
+    locationId: formData.get('locationId') || undefined,
+    size: formData.get('size') || undefined,
     note: formData.get('note') || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { trackingCode, size, note } = parsed.data;
+  const { trackingCode, locationId, size, note } = parsed.data;
   const session = await getSession();
   if (!session) redirect('/login');
   const ownerId = session.userId;
@@ -49,20 +51,23 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
 
   try {
     await db.transaction(async (tx) => {
-      // Trava a primeira posição livre da categoria (entre as estantes do usuário).
+      // Trava a primeira vaga livre do local escolhido (ou do primeiro com espaço).
       const [pos] = await tx
         .select({ id: positions.id })
         .from(positions)
-        .innerJoin(shelves, eq(positions.shelfId, shelves.id))
-        .innerJoin(sizeCategories, eq(shelves.categoryId, sizeCategories.id))
+        .innerJoin(storageLocations, eq(positions.locationId, storageLocations.id))
         .where(
           and(
-            eq(sizeCategories.code, size),
             eq(positions.status, 'LIVRE'),
-            eq(shelves.ownerId, ownerId),
+            eq(storageLocations.ownerId, ownerId),
+            ...(locationId ? [eq(storageLocations.id, locationId)] : []),
           ),
         )
-        .orderBy(asc(shelves.aisle), asc(shelves.level), asc(positions.slotNumber))
+        .orderBy(
+          asc(storageLocations.sortOrder),
+          asc(storageLocations.name),
+          asc(positions.slotNumber),
+        )
         .limit(1)
         .for('update', { of: positions });
 
@@ -73,7 +78,7 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
         .values({
           ownerId,
           trackingCode: trackingCode.trim(),
-          sizeCode: size,
+          sizeCode: size ?? null,
           status: 'AGUARDANDO_RETIRADA',
           positionId: pos.id,
           customerNote: note?.trim() || null,
@@ -90,13 +95,17 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
     });
   } catch (e) {
     if (e instanceof Error && e.message === 'SEM_POSICAO') {
-      return { error: `Não há posições livres para o tamanho ${size}` };
+      return {
+        error: locationId
+          ? 'Este local está cheio. Escolha outro.'
+          : 'Não há vagas livres. Cadastre um novo local.',
+      };
     }
     return { error: 'Falha ao salvar a entrada' };
   }
 
   revalidatePath('/app');
-  revalidatePath('/app/estantes');
+  revalidatePath('/app/locais');
   redirect('/app');
 }
 

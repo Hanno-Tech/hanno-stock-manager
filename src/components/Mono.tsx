@@ -1,18 +1,12 @@
-import Typography, { type TypographyProps } from '@mui/material/Typography';
+import { cn } from '@/lib/utils';
 
 /**
- * Texto monoespaçado (JetBrains Mono) para SKUs, códigos de rastreio,
- * quantidades e seriais — evita ambiguidade entre 0/O e 1/l.
+ * Texto monoespaçado (JetBrains Mono) para códigos de rastreio, vagas e
+ * quantidades — evita ambiguidade entre 0/O e 1/l na conferência do pacote.
  */
-export default function Mono({ sx, ...props }: TypographyProps) {
-  return (
-    <Typography
-      component="span"
-      {...props}
-      sx={[
-        { fontFamily: '"JetBrains Mono Variable", monospace', letterSpacing: '-0.01em' },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    />
-  );
+export default function Mono({
+  className,
+  ...props
+}: React.ComponentProps<'span'>) {
+  return <span className={cn('font-mono tracking-tight', className)} {...props} />;
 }

@@ -9,7 +9,6 @@ import {
   uuid,
   text,
   integer,
-  numeric,
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core';
@@ -18,6 +17,15 @@ import {
 // Enums
 // ---------------------------------------------------------------------------
 export const sizeEnum = pgEnum('size', ['P', 'M', 'G']);
+/** Tipo físico do local de guarda — rotula o card na UI, não restringe o que cabe nele. */
+export const locationKindEnum = pgEnum('location_kind', [
+  'ESTANTE',
+  'CAIXA',
+  'PRATELEIRA',
+  'PALLET',
+  'ARMARIO',
+  'OUTRO',
+]);
 export const itemStatusEnum = pgEnum('item_status', ['AGUARDANDO_RETIRADA', 'ENTREGUE']);
 export const positionStatusEnum = pgEnum('position_status', ['LIVRE', 'OCUPADA']);
 export const movementTypeEnum = pgEnum('movement_type', [
@@ -41,53 +49,42 @@ export const users = pgTable('user', {
 });
 
 // ---------------------------------------------------------------------------
-// Categorias de armazenamento (P / M / G)
+// Locais de guarda — nomeados livremente pelo operador no onboarding.
+// Substituem o antigo par size_category + shelf: em vez de "toda estante é P/M/G",
+// a agência descreve o espaço real dela ("Estante 1", "Caixa 2", "Pallet do fundo").
 // ---------------------------------------------------------------------------
-export const sizeCategories = pgTable('size_category', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  code: sizeEnum('code').notNull().unique(),
-  name: text('name').notNull(),
-  description: text('description'),
-  maxWeightKg: numeric('max_weight_kg'),
-  sortOrder: integer('sort_order').notNull().default(0),
-});
-
-// ---------------------------------------------------------------------------
-// Estantes
-// ---------------------------------------------------------------------------
-export const shelves = pgTable(
-  'shelf',
+export const storageLocations = pgTable(
+  'storage_location',
   {
     id: uuid('id').defaultRandom().primaryKey(),
     ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
-    code: text('code').notNull(),
-    categoryId: uuid('category_id')
-      .notNull()
-      .references(() => sizeCategories.id),
-    aisle: text('aisle'),
-    level: integer('level'),
+    name: text('name').notNull(),
+    kind: locationKindEnum('kind').notNull().default('ESTANTE'),
+    /** Dica livre de onde fica ("corredor do fundo", "atrás do balcão"). */
+    hint: text('hint'),
     capacity: integer('capacity').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [unique('uq_shelf_owner_code').on(t.ownerId, t.code)],
+  (t) => [unique('uq_location_owner_name').on(t.ownerId, t.name)],
 );
 
 // ---------------------------------------------------------------------------
-// Posições (slots dentro da estante)
+// Posições (slots dentro do local)
 // ---------------------------------------------------------------------------
 export const positions = pgTable(
   'position',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    shelfId: uuid('shelf_id')
+    locationId: uuid('location_id')
       .notNull()
-      .references(() => shelves.id, { onDelete: 'cascade' }),
+      .references(() => storageLocations.id, { onDelete: 'cascade' }),
     label: text('label').notNull(),
     slotNumber: integer('slot_number').notNull(),
     status: positionStatusEnum('status').notNull().default('LIVRE'),
   },
-  (t) => [unique('uq_position_slot').on(t.shelfId, t.slotNumber)],
+  (t) => [unique('uq_position_slot').on(t.locationId, t.slotNumber)],
 );
 
 // ---------------------------------------------------------------------------
@@ -99,7 +96,8 @@ export const items = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
     trackingCode: text('tracking_code').notNull(),
-    sizeCode: sizeEnum('size_code').notNull(),
+    /** Opcional: é só um rótulo do volume, não decide mais onde o item é guardado. */
+    sizeCode: sizeEnum('size_code'),
     status: itemStatusEnum('status').notNull().default('AGUARDANDO_RETIRADA'),
     positionId: uuid('position_id').references(() => positions.id),
     customerNote: text('customer_note'),
@@ -130,20 +128,15 @@ export const movements = pgTable('movement', {
 // ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------
-export const sizeCategoriesRelations = relations(sizeCategories, ({ many }) => ({
-  shelves: many(shelves),
-}));
-
-export const shelvesRelations = relations(shelves, ({ one, many }) => ({
-  category: one(sizeCategories, {
-    fields: [shelves.categoryId],
-    references: [sizeCategories.id],
-  }),
+export const storageLocationsRelations = relations(storageLocations, ({ many }) => ({
   positions: many(positions),
 }));
 
 export const positionsRelations = relations(positions, ({ one }) => ({
-  shelf: one(shelves, { fields: [positions.shelfId], references: [shelves.id] }),
+  location: one(storageLocations, {
+    fields: [positions.locationId],
+    references: [storageLocations.id],
+  }),
   item: one(items, { fields: [positions.id], references: [items.positionId] }),
 }));
 
@@ -161,8 +154,8 @@ export const movementsRelations = relations(movements, ({ one }) => ({
 // Tipos inferidos
 // ---------------------------------------------------------------------------
 export type User = typeof users.$inferSelect;
-export type SizeCategory = typeof sizeCategories.$inferSelect;
-export type Shelf = typeof shelves.$inferSelect;
+export type StorageLocation = typeof storageLocations.$inferSelect;
+export type LocationKind = (typeof locationKindEnum.enumValues)[number];
 export type Position = typeof positions.$inferSelect;
 export type Item = typeof items.$inferSelect;
 export type Movement = typeof movements.$inferSelect;

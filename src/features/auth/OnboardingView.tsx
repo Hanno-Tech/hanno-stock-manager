@@ -1,50 +1,196 @@
 'use client';
 
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import QrCodeScannerOutlinedIcon from '@mui/icons-material/QrCodeScannerOutlined';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
+import { useState, useTransition } from 'react';
+import { Plus, Trash2, TriangleAlert, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { createLocationsBulk } from '@/features/locations/actions';
+import { KIND_ICON, KIND_LABEL, LOCATION_KINDS } from '@/features/locations/format';
 import { completeOnboardingAction } from './actions';
+import type { LocationKind } from '@/db/schema';
 
-const STEPS = [
-  { icon: <QrCodeScannerOutlinedIcon fontSize="large" />, title: 'Escaneie e receba', desc: 'Leia o código da mercadoria e classifique por tamanho em segundos.' },
-  { icon: <PlaceOutlinedIcon fontSize="large" />, title: 'Posição sugerida', desc: 'O app indica a melhor estante e posição livre para o item.' },
-  { icon: <Inventory2OutlinedIcon fontSize="large" />, title: 'Entregue com rastreio', desc: 'Confirme retiradas e acompanhe o histórico de entregas.' },
+type Draft = { key: number; name: string; kind: LocationKind; capacity: number };
+
+/** Sugestões que refletem como uma agência realmente fala do próprio espaço. */
+const SUGGESTIONS: { name: string; kind: LocationKind; capacity: number }[] = [
+  { name: 'Estante 1', kind: 'ESTANTE', capacity: 12 },
+  { name: 'Estante 2', kind: 'ESTANTE', capacity: 12 },
+  { name: 'Caixa 1', kind: 'CAIXA', capacity: 8 },
+  { name: 'Prateleira A', kind: 'PRATELEIRA', capacity: 10 },
+  { name: 'Pallet do fundo', kind: 'PALLET', capacity: 6 },
 ];
 
+let nextKey = 1000;
+
 export default function OnboardingView({ name }: { name: string }) {
+  const [drafts, setDrafts] = useState<Draft[]>([
+    { key: 1, name: 'Estante 1', kind: 'ESTANTE', capacity: 12 },
+  ]);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const update = (key: number, patch: Partial<Draft>) =>
+    setDrafts((d) => d.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+
+  const add = (preset?: (typeof SUGGESTIONS)[number]) =>
+    setDrafts((d) => [
+      ...d,
+      { key: ++nextKey, name: preset?.name ?? '', kind: preset?.kind ?? 'ESTANTE', capacity: preset?.capacity ?? 12 },
+    ]);
+
+  const remove = (key: number) => setDrafts((d) => d.filter((x) => x.key !== key));
+
+  const submit = () => {
+    setError(null);
+    const filled = drafts.filter((d) => d.name.trim());
+    if (filled.length === 0) {
+      setError('Cadastre ao menos um local para continuar.');
+      return;
+    }
+    startTransition(async () => {
+      const res = await createLocationsBulk({
+        locations: filled.map((d) => ({
+          name: d.name.trim(),
+          kind: d.kind,
+          capacity: d.capacity,
+        })),
+      });
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
+      await completeOnboardingAction();
+    });
+  };
+
+  // Só oferece sugestões que ainda não estão na lista.
+  const used = new Set(drafts.map((d) => d.name.trim().toLowerCase()));
+  const available = SUGGESTIONS.filter((s) => !used.has(s.name.toLowerCase()));
+
   return (
-    <Box>
-      <Typography variant="h1" color="primary" sx={{ mb: 1 }}>
-        Bem-vindo, {name.split(' ')[0]}!
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Veja como funciona o Estoque Rápido.
-      </Typography>
+    <div className="py-4">
+      <div className="mb-6 inline-flex items-center rounded-xl bg-ml-yellow px-4 py-2">
+        <span className="font-heading text-lg font-bold text-ml-yellow-on">
+          Bem-vindo, {name.split(' ')[0]}!
+        </span>
+      </div>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 5 }}>
-        {STEPS.map((s) => (
-          <Box key={s.title} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-            <Box sx={{ color: 'primary.main', mt: 0.5 }}>{s.icon}</Box>
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                {s.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {s.desc}
-              </Typography>
-            </Box>
-          </Box>
+      <h1 className="font-heading text-2xl font-bold">Onde você guarda as mercadorias?</h1>
+      <p className="mt-2 mb-6 text-muted-foreground">
+        Dê nomes aos seus espaços do jeito que você já fala no dia a dia. Dá para mudar depois.
+      </p>
+
+      {error && (
+        <p className="mb-4 flex items-start gap-2 rounded-lg bg-red-100 p-3 text-sm text-red-900">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          {error}
+        </p>
+      )}
+
+      <ul className="flex flex-col gap-4">
+        {drafts.map((d, i) => (
+          <li key={d.key} className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+            <div className="flex items-center justify-between">
+              <span className="text-[0.6875rem] font-bold tracking-wider text-muted-foreground uppercase">
+                Local {i + 1}
+              </span>
+              {drafts.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remover local ${i + 1}`}
+                  onClick={() => remove(d.key)}
+                  className="text-muted-foreground"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+            </div>
+
+            <div className="mt-2 flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`name-${d.key}`}>Nome</Label>
+                <Input
+                  id={`name-${d.key}`}
+                  value={d.name}
+                  onChange={(e) => update(d.key, { name: e.target.value })}
+                  placeholder="Ex.: Estante 1"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex flex-1 flex-col gap-2">
+                  <Label htmlFor={`kind-${d.key}`}>Tipo</Label>
+                  <Select
+                    value={d.kind}
+                    onValueChange={(v) => update(d.key, { kind: v as LocationKind })}
+                  >
+                    <SelectTrigger id={`kind-${d.key}`} className="w-full">
+                      <SelectValue>{(v) => KIND_LABEL[v as LocationKind]}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOCATION_KINDS.map((k) => {
+                        const KindIcon = KIND_ICON[k];
+                        return (
+                          <SelectItem key={k} value={k}>
+                            <KindIcon className="size-4" />
+                            {KIND_LABEL[k]}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex w-28 flex-col gap-2">
+                  <Label htmlFor={`cap-${d.key}`}>Cabem</Label>
+                  <Input
+                    id={`cap-${d.key}`}
+                    type="number"
+                    min={1}
+                    max={500}
+                    inputMode="numeric"
+                    value={d.capacity}
+                    onChange={(e) => update(d.key, { capacity: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            </div>
+          </li>
         ))}
-      </Box>
+      </ul>
 
-      <Box component="form" action={completeOnboardingAction}>
-        <Button type="submit" variant="contained" size="large" fullWidth>
-          Começar
-        </Button>
-      </Box>
-    </Box>
+      <Button variant="outline" onClick={() => add()} className="mt-4 w-full">
+        <Plus />
+        Adicionar outro local
+      </Button>
+
+      {available.length > 0 && (
+        <div className="mt-6">
+          <p className="mb-2 text-sm text-muted-foreground">Sugestões rápidas:</p>
+          <div className="flex flex-wrap gap-2">
+            {available.map((s) => (
+              <Button key={s.name} variant="secondary" size="sm" onClick={() => add(s)}>
+                <Plus />
+                {s.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Button size="lg" onClick={submit} disabled={pending} className="mt-8 w-full">
+        {pending ? 'Criando...' : 'Começar'}
+        {!pending && <ArrowRight />}
+      </Button>
+    </div>
   );
 }

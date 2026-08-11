@@ -2,20 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
-import Dialog from '@mui/material/Dialog';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import CloseIcon from '@mui/icons-material/Close';
+import { X, TriangleAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 /**
- * Leitor de código de barras/QR pela câmera (câmera traseira quando disponível).
- * Exige HTTPS (ou localhost) e permissão de câmera. Sempre oferece digitação manual.
+ * Leitor de código de barras/QR pela câmera (traseira quando disponível).
+ * Exige HTTPS (ou localhost) e permissão de câmera. A digitação manual fica
+ * SEMPRE visível: em agência com luz ruim ou etiqueta amassada, é o caminho
+ * que salva o atendimento.
  */
 export default function BarcodeScanner({
   open,
@@ -73,7 +68,9 @@ export default function BarcodeScanner({
         );
       } catch (e) {
         const err = e as Error;
-        setError(`Câmera indisponível (${err?.name || 'erro'}: ${err?.message || ''}). Digite o código abaixo.`);
+        setError(
+          `Câmera indisponível (${err?.name || 'erro'}: ${err?.message || ''}). Digite o código abaixo.`,
+        );
       }
     })();
 
@@ -84,6 +81,18 @@ export default function BarcodeScanner({
     };
   }, [open]);
 
+  // Fecha no Esc — o Dialog do MUI dava isso de graça; aqui é explícito.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  if (!open) return null;
+
   const submitManual = () => {
     const code = manual.trim();
     if (!code) return;
@@ -93,58 +102,54 @@ export default function BarcodeScanner({
   };
 
   return (
-    <Dialog
-      fullScreen
-      open={open}
-      onClose={onClose}
-      slotProps={{ paper: { sx: { display: 'flex', flexDirection: 'column', bgcolor: 'black' } } }}
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Escanear código"
+      className="fixed inset-0 z-50 flex flex-col bg-black"
     >
-      <AppBar position="static" color="primary" elevation={0}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="Fechar" onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-          <Typography variant="h2" color="inherit" sx={{ ml: 1 }}>
-            Escanear código
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <div className="pt-safe flex min-h-14 items-center gap-2 bg-primary px-2 text-primary-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Fechar"
+          onClick={onClose}
+          className="text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+        >
+          <X />
+        </Button>
+        <span className="font-heading text-lg font-bold">Escanear código</span>
+      </div>
 
-      {/* Área do vídeo — flex:1 garante altura dentro do Paper (flex column). */}
-      <Box sx={{ position: 'relative', flex: 1, minHeight: 240, overflow: 'hidden' }}>
+      {/* Área do vídeo — flex-1 garante altura dentro da coluna flex. */}
+      <div className="relative min-h-60 flex-1 overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
           muted
           playsInline
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          className="size-full object-cover"
         />
         {!error && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '70%',
-              aspectRatio: '3 / 2',
-              border: '3px solid rgba(255,255,255,0.9)',
-              borderRadius: 2,
-              boxShadow: '0 0 0 100vmax rgba(0,0,0,0.4)',
-              pointerEvents: 'none',
-            }}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-1/2 aspect-3/2 w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-lg border-[3px] border-white/90 shadow-[0_0_0_100vmax_rgb(0_0_0/0.4)]"
           />
         )}
-      </Box>
+      </div>
 
       {/* Rodapé: erro (se houver) + digitação manual sempre disponível. */}
-      <Box sx={{ bgcolor: 'background.paper', p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {error && <Alert severity="warning">{error}</Alert>}
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Digitar código"
+      <div className="pb-safe flex flex-col gap-3 bg-card p-4">
+        {error && (
+          <p className="flex items-start gap-2 rounded-lg bg-amber-100 p-3 text-sm text-amber-900">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            {error}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <Input
+            aria-label="Digitar código"
+            placeholder="Digitar código"
             value={manual}
             onChange={(e) => setManual(e.target.value)}
             onKeyDown={(e) => {
@@ -153,12 +158,13 @@ export default function BarcodeScanner({
                 submitManual();
               }
             }}
+            className="font-mono"
           />
-          <Button variant="contained" onClick={submitManual} disabled={!manual.trim()}>
+          <Button onClick={submitManual} disabled={!manual.trim()}>
             Usar
           </Button>
-        </Box>
-      </Box>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }

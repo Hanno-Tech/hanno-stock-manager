@@ -1,16 +1,12 @@
-import Card from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import Mono from './Mono';
 import StatusPill from './StatusPill';
+import { cn } from '@/lib/utils';
 
 type Tone = 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
-/**
- * Card de item de inventário: SKU em JetBrains Mono no topo à direita,
- * título/subtítulo à esquerda e pill de status opcional.
- */
+/** Card de mercadoria: código em mono, local/observação abaixo e status. */
 export default function InventoryCard({
   sku,
   title,
@@ -25,37 +21,33 @@ export default function InventoryCard({
   href?: string;
 }) {
   const content = (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, p: 2, width: '100%' }}>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body1" noWrap sx={{ fontWeight: 600 }}>
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography variant="body2" color="text.secondary" noWrap>
-            {subtitle}
-          </Typography>
-        )}
+    <div className="flex w-full items-center gap-3 p-4">
+      <div className="min-w-0 flex-1">
+        <Mono className="block truncate font-bold">{title}</Mono>
+        {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
         {status && (
-          <Box sx={{ mt: 1 }}>
+          <div className="mt-2">
             <StatusPill label={status.label} tone={status.tone} />
-          </Box>
+          </div>
         )}
-      </Box>
-      <Mono variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-        {sku}
-      </Mono>
-    </Box>
+      </div>
+      {sku !== title && (
+        <Mono className="shrink-0 text-sm whitespace-nowrap text-muted-foreground">{sku}</Mono>
+      )}
+      {href && <ChevronRight className="size-5 shrink-0 text-muted-foreground" />}
+    </div>
   );
 
-  return (
-    <Card>
-      {href ? (
-        <CardActionArea href={href}>
-          {content}
-        </CardActionArea>
-      ) : (
-        content
-      )}
-    </Card>
+  const base = 'block overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10';
+
+  return href ? (
+    <Link
+      href={href}
+      className={cn(base, 'transition-colors hover:bg-muted/50 active:bg-muted')}
+    >
+      {content}
+    </Link>
+  ) : (
+    <div className={base}>{content}</div>
   );
 }

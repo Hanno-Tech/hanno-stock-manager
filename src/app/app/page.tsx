@@ -1,89 +1,135 @@
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { PageHeader, Mono } from '@/components';
-import DashboardSearch from '@/features/dashboard/DashboardSearch';
-import { getDashboardStats } from '@/features/dashboard/queries';
-import { requireUser } from '@/features/auth/queries';
+import Link from "next/link";
+import {
+  Package,
+  CircleCheck,
+  ScanLine,
+  ChevronRight,
+  Plus,
+} from "lucide-react";
+import { PageHeader, Mono } from "@/components";
+import { buttonVariants } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import DashboardSearch from "@/features/dashboard/DashboardSearch";
+import { getDashboardStats } from "@/features/dashboard/queries";
+import { listLocationsWithCounts } from "@/features/locations/queries";
+import { KIND_ICON, storedLabel } from "@/features/locations/format";
+import { requireUser } from "@/features/auth/queries";
 
-function KpiCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+function KpiCard({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  accent: string;
+}) {
   return (
-    <Card sx={{ flex: 1, p: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary', mb: 1 }}>
+    <div className="flex-1 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <div className="mb-1 flex items-center gap-1.5 text-muted-foreground">
         {icon}
-        <Typography variant="body2">{label}</Typography>
-      </Box>
-      <Mono variant="h1" sx={{ color, fontWeight: 700 }}>
-        {value}
-      </Mono>
-    </Card>
-  );
-}
-
-function SizeCard({ code, qty }: { code: 'P' | 'M' | 'G'; qty: number }) {
-  return (
-    <Card sx={{ flex: 1, p: 2, textAlign: 'center' }}>
-      <Mono variant="h2" color="primary" sx={{ fontWeight: 700 }}>
-        {code}
-      </Mono>
-      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-        {qty}
-      </Typography>
-    </Card>
+        <span className="text-sm">{label}</span>
+      </div>
+      <Mono className={`text-3xl font-bold ${accent}`}>{value}</Mono>
+    </div>
   );
 }
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const stats = await getDashboardStats(user.id);
+  const [stats, locations] = await Promise.all([
+    getDashboardStats(user.id),
+    listLocationsWithCounts(user.id),
+  ]);
 
   return (
     <>
       <PageHeader title="Estoque Rápido" />
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div className="flex flex-col gap-6 p-4">
         <DashboardSearch />
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <div className="flex gap-3">
           <KpiCard
-            icon={<Inventory2OutlinedIcon fontSize="small" />}
-            label="Total em Estoque"
+            icon={<Package className="size-4" />}
+            label="Em estoque"
             value={stats.totalInStock}
-            color="primary.main"
+            accent="text-primary"
           />
           <KpiCard
-            icon={<CheckCircleOutlineIcon fontSize="small" />}
-            label="Recebidos Hoje"
+            icon={<CircleCheck className="size-4" />}
+            label="Recebidos hoje"
             value={stats.receivedToday}
-            color="secondary.main"
+            accent="text-ml-success"
           />
-        </Box>
+        </div>
 
-        <Box>
-          <Typography variant="h2" sx={{ mb: 1.5 }}>
-            Distribuição por Tamanho
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <SizeCard code="P" qty={stats.bySize.P} />
-            <SizeCard code="M" qty={stats.bySize.M} />
-            <SizeCard code="G" qty={stats.bySize.G} />
-          </Box>
-        </Box>
+        {/* Onde as mercadorias estão guardadas — cada card abre a lista do local. */}
+        <section>
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="font-heading text-lg font-bold">Seus locais</h2>
+            <span className="text-sm text-muted-foreground">
+              {locations.length} {locations.length === 1 ? "local" : "locais"}
+            </span>
+          </div>
 
-        <Button
+          {locations.length === 0 ? (
+            <div className="rounded-xl bg-card p-6 text-center ring-1 ring-foreground/10">
+              <p className="font-semibold">Nenhum local cadastrado</p>
+              <p className="mt-1 mb-4 text-sm text-muted-foreground">
+                Cadastre onde você guarda as mercadorias — Estante 1, Caixa 2,
+                etc.
+              </p>
+              <Link href="/app/locais/novo" className={buttonVariants()}>
+                <Plus />
+                Cadastrar local
+              </Link>
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {locations.map((l) => {
+                const pct = l.capacity
+                  ? Math.round((l.stored / l.capacity) * 100)
+                  : 0;
+                const KindIcon = KIND_ICON[l.kind];
+                return (
+                  <li key={l.id}>
+                    <Link
+                      href={`/app/locais/${l.id}`}
+                      className="block rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-colors hover:bg-muted/50 active:bg-muted"
+                    >
+                      <div className="flex items-center gap-3">
+                        <KindIcon className="size-6 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-bold">{l.name}</p>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {storedLabel(l.stored)}
+                            {l.hint ? ` · ${l.hint}` : ""}
+                          </p>
+                        </div>
+                        <Mono className="text-2xl font-bold text-primary">
+                          {l.stored}
+                        </Mono>
+                        <ChevronRight className="size-5 text-muted-foreground" />
+                      </div>
+                      <Progress value={pct} className="mt-3 h-2" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <Link
           href="/app/receber"
-          variant="contained"
-          size="large"
-          fullWidth
-          startIcon={<QrCodeScannerIcon />}
-          sx={{ mt: 1 }}
+          className={buttonVariants({ size: "lg", className: "w-full" })}
         >
+          <ScanLine />
           Receber Mercadoria
-        </Button>
-      </Box>
+        </Link>
+      </div>
     </>
   );
 }

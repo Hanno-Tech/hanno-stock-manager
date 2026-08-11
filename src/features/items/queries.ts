@@ -1,14 +1,14 @@
 import 'server-only';
 import { and, desc, eq, ilike } from 'drizzle-orm';
 import { db } from '@/db';
-import { items, positions, shelves } from '@/db/schema';
+import { items, positions, storageLocations } from '@/db/schema';
 
 export type ItemListRow = {
   id: string;
   trackingCode: string;
-  sizeCode: 'P' | 'M' | 'G';
+  sizeCode: 'P' | 'M' | 'G' | null;
   status: 'AGUARDANDO_RETIRADA' | 'ENTREGUE';
-  shelfCode: string | null;
+  locationName: string | null;
   positionLabel: string | null;
 };
 
@@ -25,12 +25,12 @@ export async function searchItems(q: string, ownerId: string): Promise<ItemListR
       trackingCode: items.trackingCode,
       sizeCode: items.sizeCode,
       status: items.status,
-      shelfCode: shelves.code,
+      locationName: storageLocations.name,
       positionLabel: positions.label,
     })
     .from(items)
     .leftJoin(positions, eq(items.positionId, positions.id))
-    .leftJoin(shelves, eq(positions.shelfId, shelves.id))
+    .leftJoin(storageLocations, eq(positions.locationId, storageLocations.id))
     .where(where)
     .orderBy(desc(items.receivedAt))
     .limit(30);
@@ -38,7 +38,7 @@ export async function searchItems(q: string, ownerId: string): Promise<ItemListR
 
 export type ItemDetail = NonNullable<Awaited<ReturnType<typeof getItemById>>>;
 
-/** Detalhe completo de um item do usuário, com posição/estante. */
+/** Detalhe completo de um item do usuário, com a vaga e o local onde está guardado. */
 export async function getItemById(id: string, ownerId: string) {
   const [row] = await db
     .select({
@@ -53,13 +53,14 @@ export async function getItemById(id: string, ownerId: string) {
       deliveredTo: items.deliveredTo,
       positionId: items.positionId,
       positionLabel: positions.label,
-      shelfCode: shelves.code,
-      shelfAisle: shelves.aisle,
-      shelfLevel: shelves.level,
+      locationId: storageLocations.id,
+      locationName: storageLocations.name,
+      locationKind: storageLocations.kind,
+      locationHint: storageLocations.hint,
     })
     .from(items)
     .leftJoin(positions, eq(items.positionId, positions.id))
-    .leftJoin(shelves, eq(positions.shelfId, shelves.id))
+    .leftJoin(storageLocations, eq(positions.locationId, storageLocations.id))
     .where(and(eq(items.id, id), eq(items.ownerId, ownerId)))
     .limit(1);
   return row ?? null;

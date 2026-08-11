@@ -11,13 +11,13 @@ import postgres from 'postgres';
 import bcrypt from 'bcryptjs';
 import * as schema from './schema';
 
-const { users, sizeCategories, shelves, positions, items, movements } = schema;
+const { users, storageLocations, positions, items, movements } = schema;
 
 const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
 const db = drizzle(sql, { schema, casing: 'snake_case' });
 
-/** Gera o rótulo padrão de uma posição (P-01, P-02, …). */
-const slotLabel = (n: number) => `P-${String(n).padStart(2, '0')}`;
+/** Rótulo da vaga dentro do local: 01, 02, … */
+const slotLabel = (n: number) => String(n).padStart(2, '0');
 
 async function main() {
   console.log('🌱 Limpando tabelas...');
@@ -25,8 +25,7 @@ async function main() {
   await db.delete(movements);
   await db.delete(items);
   await db.delete(positions);
-  await db.delete(shelves);
-  await db.delete(sizeCategories);
+  await db.delete(storageLocations);
   await db.delete(users);
 
   // --- Usuário demo ------------------------------------------------------
@@ -43,74 +42,62 @@ async function main() {
     })
     .returning();
 
-  // --- Categorias --------------------------------------------------------
-  console.log('📦 Criando categorias...');
-  const cats = await db
-    .insert(sizeCategories)
-    .values([
-      { code: 'P', name: 'Pequeno', description: 'Itens até 5kg', maxWeightKg: '5', sortOrder: 1 },
-      { code: 'M', name: 'Médio', description: 'Itens até 20kg', maxWeightKg: '20', sortOrder: 2 },
-      { code: 'G', name: 'Grande', description: 'Paletes e Cargas Pesadas', sortOrder: 3 },
-    ])
-    .returning();
-  const catByCode = Object.fromEntries(cats.map((c) => [c.code, c]));
+  // --- Locais de guarda + vagas -----------------------------------------
+  // Nomes como uma agência real falaria, não códigos abstratos.
+  console.log('🗄️  Criando locais e vagas...');
+  const locationSpecs = [
+    { name: 'Estante 1', kind: 'ESTANTE' as const, hint: 'Atrás do balcão', capacity: 12 },
+    { name: 'Estante 2', kind: 'ESTANTE' as const, hint: 'Corredor do fundo', capacity: 12 },
+    { name: 'Caixa 1', kind: 'CAIXA' as const, hint: 'Embaixo do balcão', capacity: 8 },
+    { name: 'Caixa 2', kind: 'CAIXA' as const, hint: null, capacity: 8 },
+    { name: 'Pallet do fundo', kind: 'PALLET' as const, hint: 'Volumes grandes', capacity: 6 },
+  ];
 
-  // --- Estantes + posições ----------------------------------------------
-  console.log('🗄️  Criando estantes e posições...');
-  const shelfSpecs = [
-    { code: 'P-01', category: 'P', aisle: 'P', level: 1, capacity: 12 },
-    { code: 'P-02', category: 'P', aisle: 'P', level: 2, capacity: 12 },
-    { code: 'M-01', category: 'M', aisle: 'M', level: 1, capacity: 10 },
-    { code: 'M-02', category: 'M', aisle: 'M', level: 2, capacity: 10 },
-    { code: 'G-01', category: 'G', aisle: 'G', level: 1, capacity: 12 },
-    { code: 'G-03', category: 'G', aisle: 'G', level: 3, capacity: 12 },
-  ] as const;
-
-  const positionsByShelf: Record<string, schema.Position[]> = {};
-  for (const spec of shelfSpecs) {
-    const [shelf] = await db
-      .insert(shelves)
+  const positionsByLocation: Record<string, schema.Position[]> = {};
+  let order = 1;
+  for (const spec of locationSpecs) {
+    const [loc] = await db
+      .insert(storageLocations)
       .values({
         ownerId: demoUser.id,
-        code: spec.code,
-        categoryId: catByCode[spec.category].id,
-        aisle: spec.aisle,
-        level: spec.level,
+        name: spec.name,
+        kind: spec.kind,
+        hint: spec.hint,
         capacity: spec.capacity,
+        sortOrder: order++,
       })
       .returning();
 
     const rows = Array.from({ length: spec.capacity }, (_, i) => ({
-      shelfId: shelf.id,
+      locationId: loc.id,
       label: slotLabel(i + 1),
       slotNumber: i + 1,
     }));
-    positionsByShelf[spec.code] = await db.insert(positions).values(rows).returning();
+    positionsByLocation[spec.name] = await db.insert(positions).values(rows).returning();
   }
 
-  // --- Itens em estoque (ocupam posições) -------------------------------
+  // --- Itens em estoque (ocupam vagas) ----------------------------------
   console.log('📥 Criando itens em estoque + movimentos de ENTRADA...');
-  // Ocupa ~66% da estante G-01 (8 de 12 posições) para bater com o design.
-  const g01 = positionsByShelf['G-01'];
   const inStock = [
-    { code: 'ML-987234-A', size: 'G' as const, slot: 1, note: 'Cliente: Loja Centro' },
-    { code: 'ML-123456-X', size: 'G' as const, slot: 2, note: null },
-    { code: '8842-K', size: 'M' as const, slot: 3, note: null },
-    { code: '7742-Z', size: 'M' as const, slot: 4, note: 'Frágil' },
-    { code: '3321-B', size: 'M' as const, slot: 6, note: null },
-    { code: '4419-E', size: 'M' as const, slot: 7, note: null },
-    { code: '5590-D', size: 'G' as const, slot: 9, note: 'Baixo estoque' },
-    { code: '7720-E', size: 'G' as const, slot: 11, note: null },
+    { code: 'ML-987234-A', location: 'Estante 1', slot: 1, note: 'Ana Paula · 11 98877-1122' },
+    { code: 'ML-123456-X', location: 'Estante 1', slot: 2, note: null },
+    { code: '8842-K', location: 'Estante 1', slot: 3, note: 'Frágil' },
+    { code: '7742-Z', location: 'Estante 1', slot: 4, note: null },
+    { code: '3321-B', location: 'Estante 2', slot: 1, note: 'João Silva' },
+    { code: '4419-E', location: 'Estante 2', slot: 2, note: null },
+    { code: '5590-D', location: 'Caixa 1', slot: 1, note: null },
+    { code: '7720-E', location: 'Caixa 1', slot: 2, note: 'Retirar até sexta' },
+    { code: '9931-Q', location: 'Caixa 2', slot: 1, note: null },
+    { code: 'ML-556677-B', location: 'Pallet do fundo', slot: 1, note: 'Volume grande' },
   ];
 
   for (const it of inStock) {
-    const pos = g01.find((p) => p.slotNumber === it.slot)!;
+    const pos = positionsByLocation[it.location].find((p) => p.slotNumber === it.slot)!;
     const [item] = await db
       .insert(items)
       .values({
         ownerId: demoUser.id,
         trackingCode: it.code,
-        sizeCode: it.size,
         status: 'AGUARDANDO_RETIRADA',
         positionId: pos.id,
         customerNote: it.note,
@@ -128,10 +115,10 @@ async function main() {
   // --- Itens já entregues (para Histórico / KPIs) -----------------------
   console.log('📤 Criando entregas (histórico)...');
   const delivered = [
-    { code: 'SKU-9821-A', size: 'M' as const, to: 'João Silva' },
-    { code: 'SKU-4412-B', size: 'G' as const, to: null },
-    { code: 'SKU-7734-C', size: 'P' as const, to: 'Maria Costa' },
-    { code: 'SKU-1109-M', size: 'M' as const, to: 'Carlos Souza' },
+    { code: 'SKU-9821-A', to: 'João Silva' },
+    { code: 'SKU-4412-B', to: null },
+    { code: 'SKU-7734-C', to: 'Maria Costa' },
+    { code: 'SKU-1109-M', to: 'Carlos Souza' },
   ];
   for (const d of delivered) {
     const [item] = await db
@@ -139,7 +126,6 @@ async function main() {
       .values({
         ownerId: demoUser.id,
         trackingCode: d.code,
-        sizeCode: d.size,
         status: 'ENTREGUE',
         deliveredAt: new Date(),
         deliveredTo: d.to,
