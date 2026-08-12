@@ -14,12 +14,16 @@ export default function LoginPage() {
 
   return (
     <div>
-      {/* Amarelo ML com texto quase-preto — a única combinação legível (13.7:1). */}
-      <div className="mb-6 inline-flex items-center gap-2 rounded-lg bg-ml-yellow px-4 py-2 text-ml-yellow-on">
-        <Logo className="size-8" />
-        <span className="font-heading text-xl font-bold">Doca</span>
+      {/* Amarelo ML com texto quase-preto — a única combinação legível (13.7:1).
+          O wrapper centra a pílula, que precisa continuar inline para o fundo
+          amarelo abraçar só a marca em vez de virar uma faixa de ponta a ponta. */}
+      <div className="mb-6 flex justify-center">
+        <div className="inline-flex items-center gap-2 rounded-lg bg-ml-yellow px-4 py-2 text-ml-yellow-on">
+          <Logo className="size-8" />
+          <span className="font-heading text-xl font-bold">Doca</span>
+        </div>
       </div>
-      <p className="mb-8 text-muted-foreground">
+      <p className="mb-8 text-center text-muted-foreground">
         Entre para gerenciar as mercadorias da sua agência.
       </p>
 
