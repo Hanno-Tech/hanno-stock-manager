@@ -40,11 +40,7 @@ export default function ItemActions({
 
   return (
     <>
-      <Button
-        size="lg"
-        className="w-full bg-ml-success-action text-white hover:bg-ml-success-action/90"
-        onClick={() => setOpen(true)}
-      >
+      <Button size="lg" className="w-full" onClick={() => setOpen(true)}>
         <CircleCheck />
         Confirmar Entrega
       </Button>
@@ -54,14 +50,15 @@ export default function ItemActions({
           <DialogHeader>
             <DialogTitle>Confirmar entrega</DialogTitle>
             <DialogDescription>
-              Bipe o QR do cliente para registrar o código de retirada usado.
+              Se quiser, bipe o QR do cliente para guardar o código de retirada
+              usado. A entrega pode ser confirmada sem ele.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
             {phrase ? (
-              <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-3">
-                <Check className="size-4 shrink-0 text-ml-success-action" />
+              <div className="flex items-center gap-2 rounded-lg bg-ml-blue-soft p-3">
+                <Check className="size-4 shrink-0 text-ml-blue-strong" />
                 <div className="min-w-0">
                   <p className="text-[0.6875rem] font-bold tracking-wider text-muted-foreground uppercase">
                     Código de retirada
@@ -72,7 +69,7 @@ export default function ItemActions({
             ) : (
               <Button variant="outline" onClick={() => setScannerOpen(true)}>
                 <ScanLine />
-                Bipar QR do cliente
+                Bipar QR do cliente (opcional)
               </Button>
             )}
 
@@ -96,11 +93,7 @@ export default function ItemActions({
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
               Cancelar
             </Button>
-            <Button
-              onClick={submit}
-              disabled={pending}
-              className="bg-ml-success-action text-white hover:bg-ml-success-action/90"
-            >
+            <Button size="lg" onClick={submit} disabled={pending}>
               {pending ? 'Confirmando...' : 'Confirmar'}
             </Button>
           </DialogFooter>
