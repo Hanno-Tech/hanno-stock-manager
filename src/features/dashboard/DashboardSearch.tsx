@@ -26,9 +26,11 @@ export default function DashboardSearch() {
       <BarcodeScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onDetected={(c) => {
-          setQ(c);
-          go(c);
+        onDetected={(scan) => {
+          // Vale tanto para o id do QR da etiqueta quanto para o phrase do QR
+          // que o cliente apresenta na retirada.
+          setQ(scan.value);
+          go(scan.value);
         }}
       />
     </form>

@@ -105,6 +105,13 @@ export const items = pgTable(
     receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
     deliveredAt: timestamp('delivered_at', { withTimezone: true }),
     deliveredTo: text('delivered_to'),
+    /**
+     * Código de retirada do QR que o cliente apresentou (o `phrase`, ex.
+     * "UNIVERSO.796520"). Gravado só na confirmação da entrega: até ali o
+     * código ainda autoriza a retirada, e um banco cheio deles seria um banco
+     * de credenciais. Depois de entregue está gasto, e serve de rastro.
+     */
+    pickupPhrase: text('pickup_phrase'),
   },
   (t) => [unique('uq_item_owner_tracking').on(t.ownerId, t.trackingCode)],
 );

@@ -162,7 +162,7 @@ export default function ReceberForm({
       <BarcodeScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onDetected={(c) => setCode(c)}
+        onDetected={(scan) => setCode(scan.value)}
       />
     </form>
   );

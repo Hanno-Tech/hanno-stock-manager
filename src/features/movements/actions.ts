@@ -109,8 +109,17 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
   redirect('/app');
 }
 
-/** Confirma a entrega/retirada de um item: libera a posição e registra o movimento. */
-export async function confirmDelivery(itemId: string, deliveredTo?: string): Promise<void> {
+/**
+ * Confirma a entrega/retirada: libera a vaga e registra o movimento.
+ *
+ * `pickupPhrase` é o código do QR que o cliente apresentou. É gravado só aqui,
+ * na confirmação — antes disso o código ainda autoriza a retirada.
+ */
+export async function confirmDelivery(
+  itemId: string,
+  deliveredTo?: string,
+  pickupPhrase?: string,
+): Promise<void> {
   const session = await getSession();
   if (!session) redirect('/login');
   const ownerId = session.userId;
@@ -134,6 +143,7 @@ export async function confirmDelivery(itemId: string, deliveredTo?: string): Pro
         status: 'ENTREGUE',
         deliveredAt: new Date(),
         deliveredTo: deliveredTo?.trim() || null,
+        pickupPhrase: pickupPhrase?.trim() || null,
         positionId: null,
       })
       .where(eq(items.id, itemId));

@@ -1,0 +1,1 @@
+ALTER TABLE "item" ADD COLUMN "pickup_phrase" text;

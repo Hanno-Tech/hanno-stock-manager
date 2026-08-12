@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, desc, eq, ilike } from 'drizzle-orm';
+import { and, desc, eq, ilike, or } from 'drizzle-orm';
 import { db } from '@/db';
 import { items, positions, storageLocations } from '@/db/schema';
 
@@ -12,11 +12,21 @@ export type ItemListRow = {
   positionLabel: string | null;
 };
 
-/** Busca itens do usuário por código de rastreio (parcial). */
+/**
+ * Busca por código de rastreio, observação (nome do cliente) ou pelo código de
+ * retirada já usado — assim bipar de novo o QR do cliente acha a entrega feita.
+ */
 export async function searchItems(q: string, ownerId: string): Promise<ItemListRow[]> {
   const term = q.trim();
   const where = term
-    ? and(eq(items.ownerId, ownerId), ilike(items.trackingCode, `%${term}%`))
+    ? and(
+        eq(items.ownerId, ownerId),
+        or(
+          ilike(items.trackingCode, `%${term}%`),
+          ilike(items.customerNote, `%${term}%`),
+          ilike(items.pickupPhrase, `%${term}%`),
+        ),
+      )
     : eq(items.ownerId, ownerId);
 
   return db

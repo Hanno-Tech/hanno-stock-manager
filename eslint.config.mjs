@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Projeto Python à parte que mora no repo. Sem isto o eslint entra no
+    // .venv (que traz o bundle do Playwright) e estoura a heap do Node.
+    "scripts_scraper/**",
   ]),
 ]);
 

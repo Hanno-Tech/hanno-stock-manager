@@ -5,6 +5,7 @@ import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { X, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { parseScan, type ParsedScan } from '@/lib/scan/parse';
 
 /**
  * Leitor de código de barras/QR pela câmera (traseira quando disponível).
@@ -19,7 +20,8 @@ export default function BarcodeScanner({
 }: {
   open: boolean;
   onClose: () => void;
-  onDetected: (code: string) => void;
+  /** Recebe a leitura já normalizada — ver src/lib/scan/parse.ts. */
+  onDetected: (scan: ParsedScan) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
@@ -61,7 +63,7 @@ export default function BarcodeScanner({
             if (result && !cancelled) {
               cancelled = true;
               controls.stop();
-              onDetectedRef.current(result.getText());
+              onDetectedRef.current(parseScan(result.getText()));
               onCloseRef.current();
             }
           },
@@ -97,7 +99,8 @@ export default function BarcodeScanner({
     const code = manual.trim();
     if (!code) return;
     setManual('');
-    onDetectedRef.current(code);
+    // Passa pelo mesmo parser: o operador pode colar um payload JSON inteiro.
+    onDetectedRef.current(parseScan(code));
     onCloseRef.current();
   };
 

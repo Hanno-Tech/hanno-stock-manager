@@ -8,6 +8,13 @@
       "when": 1786479204050,
       "tag": "0000_old_crusher_hogan",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786557092010,
+      "tag": "0001_salty_squadron_sinister",
+      "breakpoints": true
     }
   ]
 }
