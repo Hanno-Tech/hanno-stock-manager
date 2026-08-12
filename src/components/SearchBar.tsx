@@ -9,7 +9,7 @@ export default function SearchBar({
   value,
   onChange,
   onScan,
-  placeholder = 'Buscar código...',
+  placeholder = 'Buscar por nome ou código...',
 }: {
   value?: string;
   onChange?: (value: string) => void;

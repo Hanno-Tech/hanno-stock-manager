@@ -20,6 +20,10 @@ const receiveSchema = z.object({
   trackingCode: z.string().min(1, 'Informe o código'),
   locationId: z.uuid('Escolha um local').optional(),
   size: z.enum(['P', 'M', 'G']).optional(),
+  // Obrigatório: sem o nome, a única forma de achar o pacote na retirada seria
+  // o QR do cliente — que não identifica o pacote. O nome é o índice da agência.
+  customerName: z.string().trim().min(2, 'Informe o nome de quem vai retirar'),
+  customerPhone: z.string().trim().optional(),
   note: z.string().optional(),
 });
 
@@ -34,10 +38,12 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
     trackingCode: formData.get('trackingCode'),
     locationId: formData.get('locationId') || undefined,
     size: formData.get('size') || undefined,
+    customerName: formData.get('customerName'),
+    customerPhone: formData.get('customerPhone') || undefined,
     note: formData.get('note') || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { trackingCode, locationId, size, note } = parsed.data;
+  const { trackingCode, locationId, size, customerName, customerPhone, note } = parsed.data;
   const session = await getSession();
   if (!session) redirect('/login');
   const ownerId = session.userId;
@@ -81,6 +87,8 @@ export async function receiveItem(_: ReceiveState, formData: FormData): Promise<
           sizeCode: size ?? null,
           status: 'AGUARDANDO_RETIRADA',
           positionId: pos.id,
+          customerName,
+          customerPhone: customerPhone || null,
           customerNote: note?.trim() || null,
         })
         .returning();

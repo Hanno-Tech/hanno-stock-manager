@@ -4,6 +4,7 @@ const DEMO = { email: 'operador@estoque.dev', password: 'senha123' };
 
 test('fluxo dourado: login → receber → entregar → histórico', async ({ page }) => {
   const code = `E2E-${Date.now()}`;
+  const customer = `Cliente E2E ${Date.now()}`;
 
   // 1. Login
   await page.goto('/login');
@@ -16,6 +17,8 @@ test('fluxo dourado: login → receber → entregar → histórico', async ({ pa
   await page.getByRole('link', { name: 'Receber Mercadoria' }).click();
   await expect(page).toHaveURL(/\/app\/receber$/);
   await page.getByPlaceholder('ML-987234-A').fill(code);
+  // Nome é obrigatório: é o índice que a agência usa para achar o pacote.
+  await page.getByLabel('Nome de quem vai retirar').fill(customer);
   // o primeiro local já vem selecionado; espera a vaga sugerida habilitar o botão
   const salvar = page.getByRole('button', { name: 'Salvar Entrada' });
   await expect(salvar).toBeEnabled({ timeout: 15_000 });
@@ -32,9 +35,9 @@ test('fluxo dourado: login → receber → entregar → histórico', async ({ pa
   await expect(page.getByText('Mercadorias aqui')).toBeVisible();
   await expect(page.getByText(code)).toBeVisible();
 
-  // 4. Buscar o item recém-criado e abrir o detalhe
-  await page.goto(`/app/buscar?q=${encodeURIComponent(code)}`);
-  await page.getByRole('link').filter({ hasText: code }).first().click();
+  // 4. Achar pelo NOME do cliente — é assim que a retirada acontece no balcão.
+  await page.goto(`/app/buscar?q=${encodeURIComponent(customer)}`);
+  await page.getByRole('link').filter({ hasText: customer }).first().click();
   await expect(page).toHaveURL(/\/app\/itens\//);
   await expect(page.getByText('Aguardando Retirada')).toBeVisible();
 

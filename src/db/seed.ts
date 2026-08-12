@@ -79,16 +79,16 @@ async function main() {
   // --- Itens em estoque (ocupam vagas) ----------------------------------
   console.log('📥 Criando itens em estoque + movimentos de ENTRADA...');
   const inStock = [
-    { code: 'ML-987234-A', location: 'Estante 1', slot: 1, note: 'Ana Paula · 11 98877-1122' },
-    { code: 'ML-123456-X', location: 'Estante 1', slot: 2, note: null },
-    { code: '8842-K', location: 'Estante 1', slot: 3, note: 'Frágil' },
-    { code: '7742-Z', location: 'Estante 1', slot: 4, note: null },
-    { code: '3321-B', location: 'Estante 2', slot: 1, note: 'João Silva' },
-    { code: '4419-E', location: 'Estante 2', slot: 2, note: null },
-    { code: '5590-D', location: 'Caixa 1', slot: 1, note: null },
-    { code: '7720-E', location: 'Caixa 1', slot: 2, note: 'Retirar até sexta' },
-    { code: '9931-Q', location: 'Caixa 2', slot: 1, note: null },
-    { code: 'ML-556677-B', location: 'Pallet do fundo', slot: 1, note: 'Volume grande' },
+    { code: 'ML-987234-A', location: 'Estante 1', slot: 1, name: 'Ana Paula Souza', phone: '11 98877-1122', note: null },
+    { code: 'ML-123456-X', location: 'Estante 1', slot: 2, name: 'Bruno Carvalho', phone: '11 97766-3344', note: null },
+    { code: '8842-K', location: 'Estante 1', slot: 3, name: 'Carla Menezes', phone: null, note: 'Frágil' },
+    { code: '7742-Z', location: 'Estante 1', slot: 4, name: 'Diego Ramos', phone: '11 96655-8899', note: null },
+    { code: '3321-B', location: 'Estante 2', slot: 1, name: 'João Silva', phone: '11 95544-1010', note: null },
+    { code: '4419-E', location: 'Estante 2', slot: 2, name: 'Elaine Prado', phone: null, note: null },
+    { code: '5590-D', location: 'Caixa 1', slot: 1, name: 'Felipe Torres', phone: '11 94433-2211', note: null },
+    { code: '7720-E', location: 'Caixa 1', slot: 2, name: 'Gabriela Lima', phone: null, note: 'Retirar até sexta' },
+    { code: '9931-Q', location: 'Caixa 2', slot: 1, name: 'Henrique Alves', phone: '11 93322-7788', note: null },
+    { code: 'ML-556677-B', location: 'Pallet do fundo', slot: 1, name: 'Isabel Nunes', phone: null, note: 'Volume grande' },
   ];
 
   for (const it of inStock) {
@@ -100,6 +100,8 @@ async function main() {
         trackingCode: it.code,
         status: 'AGUARDANDO_RETIRADA',
         positionId: pos.id,
+        customerName: it.name,
+        customerPhone: it.phone,
         customerNote: it.note,
       })
       .returning();
@@ -127,6 +129,7 @@ async function main() {
         ownerId: demoUser.id,
         trackingCode: d.code,
         status: 'ENTREGUE',
+        customerName: d.to,
         deliveredAt: new Date(),
         deliveredTo: d.to,
       })

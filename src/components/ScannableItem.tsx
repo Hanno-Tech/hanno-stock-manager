@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
  */
 export default function ScannableItem({
   label,
+  title,
   value,
   meta,
   badge,
@@ -16,6 +17,8 @@ export default function ScannableItem({
   className,
 }: {
   label?: string;
+  /** Quem retira. Quando presente vira a linha principal — é o que o operador procura. */
+  title?: string;
   value: string;
   meta?: string;
   badge?: React.ReactNode;
@@ -31,7 +34,15 @@ export default function ScannableItem({
             {label}
           </p>
         )}
-        <p className="truncate font-mono text-lg font-bold tracking-tight">{value}</p>
+        {title && <p className="truncate text-lg font-bold">{title}</p>}
+        <p
+          className={cn(
+            'truncate font-mono tracking-tight',
+            title ? 'text-sm text-muted-foreground' : 'text-lg font-bold',
+          )}
+        >
+          {value}
+        </p>
         {meta && <p className="truncate text-sm text-muted-foreground">{meta}</p>}
       </div>
       {badge}

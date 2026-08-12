@@ -23,7 +23,7 @@ export default function InventoryCard({
   const content = (
     <div className="flex w-full items-center gap-3 p-4">
       <div className="min-w-0 flex-1">
-        <Mono className="block truncate font-bold">{title}</Mono>
+        <p className="truncate font-bold">{title}</p>
         {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
         {status && (
           <div className="mt-2">

@@ -67,6 +67,7 @@ export default async function LocationDetailPage({
                 <li key={it.itemId}>
                   <ScannableItem
                     label={`Vaga ${it.positionLabel}`}
+                    title={it.customerName ?? undefined}
                     value={it.trackingCode}
                     meta={it.customerNote || formatDateTime(it.receivedAt)}
                     href={`/app/itens/${it.itemId}`}

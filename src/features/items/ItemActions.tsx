@@ -16,9 +16,16 @@ import {
 import { BarcodeScanner, Mono } from '@/components';
 import { confirmDelivery } from '@/features/movements/actions';
 
-export default function ItemActions({ itemId }: { itemId: string }) {
+export default function ItemActions({
+  itemId,
+  customerName,
+}: {
+  itemId: string;
+  customerName: string | null;
+}) {
   const [open, setOpen] = useState(false);
-  const [to, setTo] = useState('');
+  // Já vem com o nome do cadastro: no caso normal o operador só confirma.
+  const [to, setTo] = useState(customerName ?? '');
   const [phrase, setPhrase] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -70,7 +77,7 @@ export default function ItemActions({ itemId }: { itemId: string }) {
             )}
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="deliveredTo">Entregue a (opcional)</Label>
+              <Label htmlFor="deliveredTo">Entregue a</Label>
               <Input
                 id="deliveredTo"
                 value={to}

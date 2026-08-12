@@ -100,6 +100,15 @@ export const items = pgTable(
     sizeCode: sizeEnum('size_code'),
     status: itemStatusEnum('status').notNull().default('AGUARDANDO_RETIRADA'),
     positionId: uuid('position_id').references(() => positions.id),
+    /**
+     * Nome de quem vai retirar. É o índice que a agência consegue construir
+     * sozinha: o QR do cliente não identifica o pacote, então achar por nome é
+     * o caminho que sempre funciona. Obrigatório no recebimento (validado na
+     * action); nulo em DB só para não invalidar itens criados antes disso.
+     */
+    customerName: text('customer_name'),
+    /** Opcional, mas é a segunda melhor chave de busca depois do nome. */
+    customerPhone: text('customer_phone'),
     customerNote: text('customer_note'),
     photoUrl: text('photo_url'),
     receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),

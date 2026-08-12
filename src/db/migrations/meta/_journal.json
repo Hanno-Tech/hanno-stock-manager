@@ -15,6 +15,13 @@
       "when": 1786557092010,
       "tag": "0001_salty_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786559590063,
+      "tag": "0002_goofy_photon",
+      "breakpoints": true
     }
   ]
 }

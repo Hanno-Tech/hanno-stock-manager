@@ -43,6 +43,7 @@ export async function listLocationsWithCounts(ownerId: string): Promise<Location
 export type StoredItemRow = {
   itemId: string;
   trackingCode: string;
+  customerName: string | null;
   customerNote: string | null;
   receivedAt: Date;
   positionLabel: string;
@@ -84,6 +85,7 @@ export async function getLocationDetail(
     .select({
       itemId: items.id,
       trackingCode: items.trackingCode,
+      customerName: items.customerName,
       customerNote: items.customerNote,
       receivedAt: items.receivedAt,
       positionLabel: positions.label,

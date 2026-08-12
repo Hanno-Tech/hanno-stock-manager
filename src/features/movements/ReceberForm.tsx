@@ -90,6 +90,34 @@ export default function ReceberForm({
       </div>
 
       <div className="flex flex-col gap-2">
+        <Label htmlFor="customerName">Nome de quem vai retirar</Label>
+        <Input
+          id="customerName"
+          name="customerName"
+          placeholder="Ex.: Ana Paula Souza"
+          required
+          minLength={2}
+          autoComplete="off"
+          aria-describedby="customerName-hint"
+        />
+        <p id="customerName-hint" className="text-sm text-muted-foreground">
+          É por aqui que você acha o pacote quando o cliente chegar.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="customerPhone">Telefone (opcional)</Label>
+        <Input
+          id="customerPhone"
+          name="customerPhone"
+          type="tel"
+          inputMode="tel"
+          placeholder="11 98877-1122"
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
         <Label htmlFor="locationId">Guardar em</Label>
         <Select
           name="locationId"
@@ -145,8 +173,8 @@ export default function ReceberForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="note">Nome do cliente / Obs (opcional)</Label>
-        <Textarea id="note" name="note" rows={2} />
+        <Label htmlFor="note">Observação (opcional)</Label>
+        <Textarea id="note" name="note" rows={2} placeholder="Ex.: frágil, retirar até sexta" />
       </div>
 
       <Button

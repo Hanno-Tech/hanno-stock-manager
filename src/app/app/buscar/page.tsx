@@ -33,7 +33,7 @@ export default async function BuscarPage({
               <InventoryCard
                 key={it.id}
                 sku={it.trackingCode}
-                title={it.trackingCode}
+                title={it.customerName ?? it.trackingCode}
                 subtitle={local}
                 status={pill}
                 href={`/app/itens/${it.id}`}

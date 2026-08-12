@@ -6,6 +6,7 @@ import { items, positions, storageLocations } from '@/db/schema';
 export type ItemListRow = {
   id: string;
   trackingCode: string;
+  customerName: string | null;
   sizeCode: 'P' | 'M' | 'G' | null;
   status: 'AGUARDANDO_RETIRADA' | 'ENTREGUE';
   locationName: string | null;
@@ -13,8 +14,9 @@ export type ItemListRow = {
 };
 
 /**
- * Busca por código de rastreio, observação (nome do cliente) ou pelo código de
- * retirada já usado — assim bipar de novo o QR do cliente acha a entrega feita.
+ * Busca por nome de quem retira, telefone, código de rastreio, observação ou
+ * código de retirada já usado. O nome vem primeiro de propósito: é a chave que
+ * o operador tem na mão quando o cliente chega no balcão.
  */
 export async function searchItems(q: string, ownerId: string): Promise<ItemListRow[]> {
   const term = q.trim();
@@ -22,6 +24,8 @@ export async function searchItems(q: string, ownerId: string): Promise<ItemListR
     ? and(
         eq(items.ownerId, ownerId),
         or(
+          ilike(items.customerName, `%${term}%`),
+          ilike(items.customerPhone, `%${term}%`),
           ilike(items.trackingCode, `%${term}%`),
           ilike(items.customerNote, `%${term}%`),
           ilike(items.pickupPhrase, `%${term}%`),
@@ -33,6 +37,7 @@ export async function searchItems(q: string, ownerId: string): Promise<ItemListR
     .select({
       id: items.id,
       trackingCode: items.trackingCode,
+      customerName: items.customerName,
       sizeCode: items.sizeCode,
       status: items.status,
       locationName: storageLocations.name,
@@ -56,6 +61,8 @@ export async function getItemById(id: string, ownerId: string) {
       trackingCode: items.trackingCode,
       sizeCode: items.sizeCode,
       status: items.status,
+      customerName: items.customerName,
+      customerPhone: items.customerPhone,
       customerNote: items.customerNote,
       photoUrl: items.photoUrl,
       receivedAt: items.receivedAt,

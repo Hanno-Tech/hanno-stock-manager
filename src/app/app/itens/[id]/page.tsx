@@ -30,6 +30,20 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
             </div>
             <StatusPill label={pill.label} tone={pill.tone} className="shrink-0" />
           </div>
+          {item.customerName && (
+            <div className="mb-3">
+              <p className="text-sm text-muted-foreground">Quem retira</p>
+              <p className="text-lg font-bold">{item.customerName}</p>
+              {item.customerPhone && (
+                <a
+                  href={`tel:${item.customerPhone.replace(/[^0-9+]/g, '')}`}
+                  className="text-sm font-semibold text-ml-blue-strong hover:underline"
+                >
+                  {item.customerPhone}
+                </a>
+              )}
+            </div>
+          )}
           <div>
             <p className="text-sm text-muted-foreground">
               {item.status === 'ENTREGUE' ? 'Entregue em' : 'Recebido em'}
@@ -73,7 +87,9 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        {item.status === 'AGUARDANDO_RETIRADA' && <ItemActions itemId={item.id} />}
+        {item.status === 'AGUARDANDO_RETIRADA' && (
+          <ItemActions itemId={item.id} customerName={item.customerName} />
+        )}
       </div>
     </>
   );
