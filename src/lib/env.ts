@@ -8,11 +8,9 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   AUTH_SECRET: z.string().min(1),
   AUTH_URL: z.string().url().optional(),
-  S3_ENDPOINT: z.string().url().optional(),
-  S3_REGION: z.string().optional(),
-  S3_ACCESS_KEY: z.string().optional(),
-  S3_SECRET_KEY: z.string().optional(),
-  S3_BUCKET: z.string().optional(),
+  // Injetado pela Vercel (store `doca-fotos`). Opcional: sem ele o app sobe e só
+  // o upload de foto falha, com mensagem na tela.
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -9,15 +9,16 @@ Stack: **Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 + shad
 
 ## Pré-requisitos
 - Node 24 LTS (`nvm use`)
-- Docker (Postgres + MinIO)
+- Docker (Postgres)
 
 ## Setup
 
 ```bash
 nvm use                 # Node 24
 cp .env.example .env     # ajuste segredos se necessário
+npx vercel env pull      # traz o BLOB_READ_WRITE_TOKEN (fotos) para o .env.local
 npm install
-npm run db:up            # sobe Postgres (porta 5433) + MinIO
+npm run db:up            # sobe Postgres (porta 5433)
 npm run db:migrate       # aplica migrations (após a Fase 2)
 npm run db:seed          # popula dados de exemplo (após a Fase 2)
 npm run dev              # http://localhost:3000
@@ -32,7 +33,7 @@ npm run dev              # http://localhost:3000
 | `npm run build` / `start` | Build e execução de produção |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm run db:up` / `db:down` | Sobe/derruba containers (Postgres + MinIO) |
+| `npm run db:up` / `db:down` | Sobe/derruba o container do Postgres |
 | `npm run db:generate` | Gera migration a partir do schema Drizzle |
 | `npm run db:migrate` | Aplica migrations |
 | `npm run db:studio` | Drizzle Studio |
@@ -41,4 +42,4 @@ npm run dev              # http://localhost:3000
 ## Serviços locais
 - App: http://localhost:3000
 - Postgres: `localhost:5433` (`estoque` / `estoque`)
-- MinIO API: http://localhost:9000 · Console: http://localhost:9001 (`minio` / `minio12345`)
+- Fotos dos itens: **Vercel Blob** (store `doca-fotos`), inclusive em dev — ver [`docs/DEPLOY.md`](docs/DEPLOY.md)
