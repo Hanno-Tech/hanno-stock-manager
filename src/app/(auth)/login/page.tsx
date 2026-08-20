@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import Link from 'next/link';
-import { TriangleAlert, Info } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { Logo } from '@/components';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,11 +63,10 @@ export default function LoginPage() {
         </Link>
       </p>
 
-      <p className="mt-8 flex items-start gap-2 rounded-lg bg-accent p-3 text-sm text-accent-foreground">
-        <Info className="mt-0.5 size-4 shrink-0" />
-        <span>
-          Demo: <strong>operador@estoque.dev</strong> / <strong>senha123</strong>
-        </span>
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        <Link href="/sobre" className="hover:underline">
+          Conheça o Doca
+        </Link>
       </p>
     </div>
   );
