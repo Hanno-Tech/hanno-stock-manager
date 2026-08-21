@@ -6,6 +6,7 @@ import { db } from '@/db';
 import { asaasEvents, subscriptions } from '@/db/schema';
 import { env } from '@/lib/env';
 import {
+  adoptSubscription,
   fetchSubscriptionState,
   findSubscriptionForEvent,
   reconcileByCheckoutId,
@@ -46,6 +47,9 @@ const eventoSchema = z.object({
       id: z.string(),
       subscription: z.string().nullish(),
       customer: z.string().nullish(),
+      /** Checkout que originou a cobrança — o elo com a conta antes de a
+       *  assinatura ser gravada aqui. */
+      checkoutSession: z.string().nullish(),
       externalReference: z.string().nullish(),
     })
     .nullish(),
@@ -121,8 +125,9 @@ export async function POST(req: Request) {
     return recebido(true);
   }
 
-  const sub = await findSubscriptionForEvent({
+  let sub = await findSubscriptionForEvent({
     subscriptionId: evento.payment?.subscription ?? evento.subscription?.id,
+    checkoutId: evento.payment?.checkoutSession ?? evento.checkout?.id,
     customerId: evento.payment?.customer ?? evento.subscription?.customer ?? evento.checkout?.customer,
     ownerId:
       evento.payment?.externalReference ??
@@ -135,6 +140,15 @@ export async function POST(req: Request) {
   if (!sub) {
     await db.insert(asaasEvents).values({ id: evento.id, event: evento.event }).onConflictDoNothing();
     return recebido(true);
+  }
+
+  // Primeira cobrança de uma assinatura nascida no checkout: a conta foi achada
+  // pelo `checkoutSession`, mas ainda não conhece os ids do Asaas. Ligar aqui,
+  // com o que o próprio evento entrega, antes de ler o estado — senão
+  // `fetchSubscriptionState` não tem assinatura para consultar e o pagamento
+  // passa batido.
+  if (!sub.asaasSubscriptionId && evento.payment?.subscription) {
+    sub = await adoptSubscription(sub, evento.payment.subscription, evento.payment.customer);
   }
 
   // Leitura antes da transação: se o Asaas falhar aqui, nada foi marcado como

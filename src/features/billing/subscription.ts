@@ -242,12 +242,35 @@ export async function cancelSubscription(sub: Subscription): Promise<Subscriptio
 }
 
 /**
+ * Liga a conta à assinatura que o checkout criou, com os ids que o próprio
+ * evento entrega — sem precisar adivinhar "a mais nova do cliente".
+ */
+export async function adoptSubscription(
+  sub: Subscription,
+  asaasSubscriptionId: string,
+  asaasCustomerId?: string | null,
+): Promise<Subscription> {
+  const [row] = await db
+    .update(subscriptions)
+    .set({
+      asaasSubscriptionId,
+      asaasCustomerId: asaasCustomerId ?? sub.asaasCustomerId,
+      checkoutId: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.id, sub.id))
+    .returning();
+  return row;
+}
+
+/**
  * Acha a assinatura que um evento de webhook diz respeito. O id da assinatura é
  * o caminho normal; cliente e `externalReference` são a rede de segurança para
  * eventos de cobrança avulsa ou payload incompleto.
  */
 export async function findSubscriptionForEvent(hint: {
   subscriptionId?: string | null;
+  checkoutId?: string | null;
   customerId?: string | null;
   ownerId?: string | null;
 }): Promise<Subscription | null> {
@@ -259,6 +282,10 @@ export async function findSubscriptionForEvent(hint: {
   if (hint.subscriptionId) {
     buscas.push(eq(subscriptions.asaasSubscriptionId, hint.subscriptionId));
   }
+  // O `checkoutSession` da cobrança é o único elo com a conta na primeira
+  // cobrança de uma assinatura criada pelo checkout: ali ainda não gravamos os
+  // ids do Asaas, e o `externalReference` da cobrança vem nulo.
+  if (hint.checkoutId) buscas.push(eq(subscriptions.checkoutId, hint.checkoutId));
   if (hint.customerId) buscas.push(eq(subscriptions.asaasCustomerId, hint.customerId));
   if (ownerId) buscas.push(eq(subscriptions.ownerId, ownerId));
 
