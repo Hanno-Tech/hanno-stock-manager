@@ -22,6 +22,12 @@ const USER_AGENT = 'DocaApp';
 /** O cadastro espera por esta chamada; não pode ficar pendurado. */
 const TIMEOUT_MS = 10_000;
 
+/**
+ * Erro de cobrança já pronto para a tela. A `message` é sempre genérica: o
+ * detalhe (chave ausente, ambiente errado, resposta do Asaas) vai para o log do
+ * servidor e nunca para o cliente — falha de configuração não é assunto da
+ * agência, e dizer o que falta é dar mapa para quem estiver sondando.
+ */
 export class AsaasError extends Error {
   constructor(
     message: string,
@@ -33,12 +39,21 @@ export class AsaasError extends Error {
   }
 }
 
+/** O que a agência lê quando a cobrança não anda. */
+const GENERICA = 'Não foi possível processar o pagamento agora. Tente de novo em instantes.';
+
+/** Registra o detalhe no servidor e devolve o erro genérico para a tela. */
+export function falhaAsaas(detalhe: string, status?: number, code?: string): AsaasError {
+  console.error('[asaas]', detalhe);
+  return new AsaasError(GENERICA, status, code);
+}
+
 function baseUrl(key: string): string {
   if (env.ASAAS_ENV) return ENDPOINT[env.ASAAS_ENV];
   if (key.startsWith('$aact_prod_')) return ENDPOINT.production;
   if (key.startsWith('$aact_hmlg_')) return ENDPOINT.sandbox;
-  throw new AsaasError(
-    'Chave do Asaas sem prefixo reconhecido ($aact_prod_ / $aact_hmlg_). Defina ASAAS_ENV.',
+  throw falhaAsaas(
+    'chave sem prefixo reconhecido ($aact_prod_ / $aact_hmlg_); defina ASAAS_ENV',
   );
 }
 
@@ -50,7 +65,7 @@ async function request<T>(
   init: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: unknown } = {},
 ): Promise<T> {
   const key = env.ASAAS_API_KEY;
-  if (!key) throw new AsaasError('ASAAS_API_KEY ausente — cobrança não configurada');
+  if (!key) throw falhaAsaas('ASAAS_API_KEY ausente — cobrança não configurada');
 
   let res: Response;
   try {
@@ -66,7 +81,7 @@ async function request<T>(
       cache: 'no-store',
     });
   } catch (cause) {
-    throw new AsaasError(`Não foi possível falar com o Asaas: ${(cause as Error).message}`);
+    throw falhaAsaas(`falha de rede em ${path}: ${(cause as Error).message}`);
   }
 
   const text = await res.text();
@@ -75,13 +90,15 @@ async function request<T>(
     data = text ? JSON.parse(text) : null;
   } catch {
     // Página de erro em HTML (proxy, manutenção): a mensagem crua não ajuda.
-    throw new AsaasError(`Asaas respondeu ${res.status} sem JSON`, res.status);
+    throw falhaAsaas(`${path} respondeu ${res.status} sem JSON`, res.status);
   }
 
   if (!res.ok) {
     const first = (data as { errors?: { code?: string; description?: string }[] })?.errors?.[0];
-    throw new AsaasError(
-      first?.description ?? `Asaas respondeu ${res.status}`,
+    // A descrição do Asaas fica no log: ela diz coisas como "a chave de API
+    // fornecida é inválida", que a agência não pode ver nem resolver.
+    throw falhaAsaas(
+      `${path} → ${res.status} ${first?.code ?? ''} ${first?.description ?? ''}`.trim(),
       res.status,
       first?.code,
     );

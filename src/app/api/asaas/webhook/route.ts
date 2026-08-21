@@ -19,7 +19,8 @@ import {
  *
  *  1. **Autenticação.** O Asaas manda o token configurado no webhook no header
  *     `asaas-access-token`. Sem `ASAAS_WEBHOOK_TOKEN` no ambiente a rota recusa
- *     tudo — melhor 503 do que aceitar POST de qualquer um liberando acesso.
+ *     tudo com 401 — melhor recusar do que aceitar POST de qualquer um
+ *     liberando acesso, e o 401 não revela se a integração existe.
  *  2. **Idempotência.** A entrega é "at least once": o mesmo evento chega mais
  *     de uma vez. O id do evento é chave primária de `asaas_event`.
  *  3. **Retentativa.** O id do evento e a mudança de estado são gravados na
@@ -71,9 +72,12 @@ const recebido = (ok: boolean, status = 200) =>
   Response.json({ received: ok }, { status });
 
 export async function POST(req: Request) {
+  // Falta de token e token errado devolvem a mesma coisa: quem sondar o
+  // endpoint não descobre se a integração está configurada. O motivo real fica
+  // no log do servidor.
   if (!env.ASAAS_WEBHOOK_TOKEN) {
     console.error('[asaas] webhook chamado sem ASAAS_WEBHOOK_TOKEN configurado');
-    return recebido(false, 503);
+    return recebido(false, 401);
   }
   if (!tokenValido(req.headers.get('asaas-access-token'), env.ASAAS_WEBHOOK_TOKEN)) {
     return recebido(false, 401);

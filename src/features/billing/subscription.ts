@@ -53,8 +53,9 @@ async function logo(): Promise<string> {
 function urlBase(): string {
   const url = env.APP_URL ?? env.AUTH_URL;
   if (!url || url.includes('localhost') || url.includes('127.0.0.1')) {
-    throw new asaas.AsaasError(
-      'O checkout do Asaas exige URL pública. Defina APP_URL (ex.: a URL de um túnel) para testar fora de produção.',
+    // Detalhe só no log: qual variável falta é problema de quem opera o app.
+    throw asaas.falhaAsaas(
+      'o checkout exige URL pública — defina APP_URL (em dev, a URL de um túnel)',
     );
   }
   return url.replace(/\/$/, '');
