@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { Ban, CreditCard, RefreshCw, TriangleAlert } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, useTransition } from 'react';
+import { Ban, CreditCard, ExternalLink, RefreshCw, TriangleAlert } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -38,14 +39,31 @@ export default function BillingActions({
   const [resultado, setResultado] = useState<BillingActionState>({});
   const [pending, startTransition] = useTransition();
 
-  // As ações que dão certo terminam em `redirect`, então só volta resultado
-  // quando algo falhou — ou no cancelamento, que fica na mesma tela.
+  // As ações que abrem pagamento devolvem o link do Asaas em vez de redirecionar
+  // do servidor: a navegação para outra origem tem de sair daqui, onde dá para
+  // deixar um link tocável na tela se o navegador não a executar — é o que
+  // acontece no app instalado como PWA, que entrega ao sistema a navegação para
+  // fora do `scope` do manifesto.
   const rodar = (fn: () => Promise<BillingActionState>, fechar?: () => void) =>
     startTransition(async () => {
-      const r = (await fn()) ?? {};
+      let r: BillingActionState;
+      try {
+        r = (await fn()) ?? {};
+      } catch {
+        setResultado({ error: 'Não foi possível falar com o servidor. Tente de novo.' });
+        return;
+      }
       setResultado(r);
       if (!r.error) fechar?.();
     });
+
+  // A navegação sai de um efeito, e não de dentro da transição, para o link do
+  // plano B já estar no DOM quando ela começar: se o navegador engolir a
+  // navegação, a pessoa encontra o link em vez de uma tela parada.
+  const link = resultado.link;
+  useEffect(() => {
+    if (link) window.location.assign(link);
+  }, [link]);
 
   return (
     <div className="mt-4 flex flex-col gap-2">
@@ -56,16 +74,31 @@ export default function BillingActions({
         </p>
       )}
 
+      {/* Plano B: se a navegação automática não acontecer, a pessoa toca no
+          link. Um clique em âncora é a única forma de sair do app instalado
+          que todo navegador respeita. */}
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}
+        >
+          Abrir a página de pagamento
+          <ExternalLink className="size-3.5 opacity-70" />
+        </a>
+      )}
+
       {temAssinatura ? (
         <>
           <Button
             variant="outline"
             className="w-full"
-            disabled={pending}
+            disabled={pending || !!link}
             onClick={() => rodar(changeCardAction)}
           >
             <RefreshCw />
-            {pending ? 'Abrindo...' : 'Trocar cartão'}
+            {pending || link ? 'Abrindo...' : 'Trocar cartão'}
           </Button>
 
           <Button
@@ -81,11 +114,11 @@ export default function BillingActions({
         <Button
           size="lg"
           className="w-full"
-          disabled={pending}
+          disabled={pending || !!link}
           onClick={() => rodar(startCheckoutAction)}
         >
           <CreditCard />
-          {pending ? 'Abrindo pagamento...' : rotuloAssinar}
+          {pending || link ? 'Abrindo pagamento...' : rotuloAssinar}
         </Button>
       )}
 

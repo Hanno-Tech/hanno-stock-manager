@@ -12,7 +12,12 @@ import {
   syncSubscription,
 } from './subscription';
 
-export type BillingActionState = { error?: string; ok?: string };
+export type BillingActionState = {
+  error?: string;
+  ok?: string;
+  /** Página de pagamento do Asaas. Quem navega até lá é o cliente. */
+  link?: string;
+};
 
 /**
  * O que a agência lê quando algo falha. Só repassa a mensagem do erro quando
@@ -31,8 +36,15 @@ function revalidar() {
 }
 
 /**
- * Abre o checkout e manda a agência para a página do Asaas. O `redirect` sai
- * daqui, e não do cliente, para o link nunca ficar exposto antes da hora.
+ * Abre o checkout e devolve o endereço da página do Asaas.
+ *
+ * Devolve em vez de `redirect`: o Asaas é outra origem, e um `redirect` externo
+ * vindo de Server Action vira uma navegação de página inteira disparada de
+ * dentro do render do App Router (`location.assign`), que a ação nunca vê
+ * acontecer. Se o navegador não executar — é o caso do app instalado como PWA,
+ * onde sair do `scope` do manifesto fica a cargo do sistema — o botão trava em
+ * "Abrindo pagamento..." para sempre, sem erro e sem saída. Com o link na mão,
+ * o cliente navega e ainda mostra um link tocável como plano B.
  */
 export async function startCheckoutAction(): Promise<BillingActionState> {
   const user = await getCurrentUser();
@@ -46,7 +58,7 @@ export async function startCheckoutAction(): Promise<BillingActionState> {
   }
 
   revalidar();
-  redirect(link);
+  return { link };
 }
 
 /**
@@ -108,5 +120,5 @@ export async function changeCardAction(): Promise<BillingActionState> {
   }
 
   revalidar();
-  redirect(link);
+  return { link };
 }
