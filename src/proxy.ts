@@ -17,8 +17,9 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const authed = await isValidSession(req.cookies.get(COOKIE)?.value);
 
-  // Área autenticada
-  if (pathname.startsWith('/app')) {
+  // Área autenticada — inclui a tela de pagamento, que é onde o app trava
+  // quando o teste acaba sem assinatura paga.
+  if (pathname.startsWith('/app') || pathname === '/assinatura') {
     if (!authed) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
@@ -39,5 +40,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/app/:path*', '/login', '/cadastro'],
+  matcher: ['/app/:path*', '/assinatura', '/login', '/cadastro'],
 };

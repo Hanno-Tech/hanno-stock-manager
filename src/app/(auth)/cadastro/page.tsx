@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { registerAction, type ActionState } from '@/features/auth/actions';
+import { PLANO, VALOR_FORMATADO } from '@/lib/billing/plan';
 
 export default function CadastroPage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(registerAction, {});
@@ -14,7 +15,10 @@ export default function CadastroPage() {
   return (
     <div>
       <h1 className="font-heading mb-1 text-2xl font-bold text-primary">Criar conta</h1>
-      <p className="mb-8 text-muted-foreground">Leva menos de um minuto.</p>
+      <p className="mb-8 text-muted-foreground">
+        Leva menos de um minuto. Os primeiros {PLANO.trialDias} dias são grátis — depois{' '}
+        {VALOR_FORMATADO} por mês.
+      </p>
 
       <form action={formAction} className="flex flex-col gap-4">
         {state.error && (
@@ -32,6 +36,23 @@ export default function CadastroPage() {
         <div className="flex flex-col gap-2">
           <Label htmlFor="email">E-mail</Label>
           <Input id="email" name="email" type="email" autoComplete="email" required />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="cpfCnpj">CPF ou CNPJ</Label>
+          {/* Aceita letras: o CNPJ é alfanumérico para empresas abertas a
+              partir de 31/07/2026. */}
+          <Input
+            id="cpfCnpj"
+            name="cpfCnpj"
+            inputMode="text"
+            autoComplete="off"
+            required
+            aria-describedby="cpfCnpj-hint"
+          />
+          <p id="cpfCnpj-hint" className="text-sm text-muted-foreground">
+            Documento da agência, usado na cobrança da mensalidade
+          </p>
         </div>
 
         <div className="flex flex-col gap-2">

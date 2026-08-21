@@ -22,6 +22,27 @@
       "when": 1786559590063,
       "tag": "0002_goofy_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787336077943,
+      "tag": "0003_rare_hobgoblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787338405226,
+      "tag": "0004_strange_whiplash",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787340760791,
+      "tag": "0005_fat_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }

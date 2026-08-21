@@ -3,9 +3,12 @@ import { PageHeader } from '@/components';
 import { Button } from '@/components/ui/button';
 import { requireUser } from '@/features/auth/queries';
 import { logoutAction } from '@/features/auth/actions';
+import { getBillingState } from '@/features/billing/access';
+import BillingCard from '@/features/billing/BillingCard';
 
 export default async function PerfilPage() {
   const user = await requireUser();
+  const billing = await getBillingState(user);
 
   return (
     <>
@@ -18,7 +21,11 @@ export default async function PerfilPage() {
           <h2 className="font-heading text-lg font-bold">{user.name}</h2>
           <p className="text-sm text-muted-foreground">{user.email}</p>
         </div>
-        <form action={logoutAction} className="mt-6 w-full">
+        <div className="mt-4 w-full">
+          <BillingCard state={billing} />
+        </div>
+
+        <form action={logoutAction} className="mt-2 w-full">
           <Button
             type="submit"
             variant="outline"

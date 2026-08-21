@@ -7,6 +7,7 @@ import { users } from '@/db/schema';
 import { createSession, destroySession, getSession } from '@/lib/auth/session';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { loginSchema, registerSchema } from '@/lib/schemas/auth';
+import { PLANO, addDias } from '@/lib/billing/plan';
 
 export type ActionState = { error?: string };
 
@@ -24,11 +25,12 @@ export async function registerAction(_: ActionState, formData: FormData): Promis
   const parsed = registerSchema.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
+    cpfCnpj: formData.get('cpfCnpj'),
     password: formData.get('password'),
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const { name, email, password } = parsed.data;
+  const { name, email, cpfCnpj, password } = parsed.data;
   const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (existing.length) return { error: 'E-mail já cadastrado' };
 
@@ -38,12 +40,16 @@ export async function registerAction(_: ActionState, formData: FormData): Promis
     .values({
       name,
       email,
+      cpfCnpj,
       passwordHash: await hashPassword(password),
       emailVerifiedAt: new Date(),
+      trialEndsAt: addDias(new Date(), PLANO.trialDias),
     })
     .returning();
 
   await sessionFromUser(user);
+  // Nada de Asaas aqui: o cadastro é só teste grátis. Cliente, cartão e
+  // assinatura nascem juntos no checkout, quando a agência decide assinar.
   redirect('/onboarding');
 }
 

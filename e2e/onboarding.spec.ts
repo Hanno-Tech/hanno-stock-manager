@@ -11,6 +11,8 @@ test('conta nova é ensinada e cadastra seus locais', async ({ page }) => {
   await page.goto('/cadastro');
   await page.getByLabel('Nome').fill('Agência E2E');
   await page.getByLabel('E-mail').fill(email);
+  // Documento da cobrança: o cadastro valida o dígito verificador.
+  await page.getByLabel('CPF ou CNPJ').fill('529.982.247-25');
   await page.getByLabel('Senha').fill('senha123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
 
@@ -45,6 +47,7 @@ test('volta da etapa de locais para a explicação', async ({ page }) => {
   await page.goto('/cadastro');
   await page.getByLabel('Nome').fill('Agência Volta');
   await page.getByLabel('E-mail').fill(`e2e-back-${Date.now()}@estoque.dev`);
+  await page.getByLabel('CPF ou CNPJ').fill('529.982.247-25');
   await page.getByLabel('Senha').fill('senha123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
 

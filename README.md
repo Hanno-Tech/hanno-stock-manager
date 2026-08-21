@@ -37,9 +37,10 @@ npm run dev              # http://localhost:3000
 | `npm run db:generate` | Gera migration a partir do schema Drizzle |
 | `npm run db:migrate` | Aplica migrations |
 | `npm run db:studio` | Drizzle Studio |
-| `npm run db:seed` | Popula dados de exemplo |
+| `npm run db:seed` | Popula dados de exemplo (**apaga os usuários existentes**) |
 
 ## Serviços locais
 - App: http://localhost:3000
 - Postgres: `localhost:5433` (`estoque` / `estoque`)
 - Fotos dos itens: **Vercel Blob** (store `doca-fotos`), inclusive em dev — ver [`docs/DEPLOY.md`](docs/DEPLOY.md)
+- Cobrança: **Asaas** (assinatura de R$ 19,90/mês, teste grátis de 7 dias). Em dev use a chave do Sandbox; sem chave o app sobe e só a assinatura não é aberta — ver [`docs/DEPLOY.md`](docs/DEPLOY.md)

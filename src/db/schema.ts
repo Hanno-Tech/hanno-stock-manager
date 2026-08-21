@@ -10,6 +10,7 @@ import {
   text,
   integer,
   timestamp,
+  date,
   unique,
 } from 'drizzle-orm/pg-core';
 
@@ -33,6 +34,13 @@ export const movementTypeEnum = pgEnum('movement_type', [
   'ENTREGA',
   'REPOSICIONAMENTO',
 ]);
+/** Estado da assinatura no Doca — derivado dos webhooks do Asaas. */
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'PENDENTE',
+  'ATIVA',
+  'VENCIDA',
+  'CANCELADA',
+]);
 
 // ---------------------------------------------------------------------------
 // Usuários (operadores)
@@ -42,6 +50,17 @@ export const users = pgTable('user', {
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
   passwordHash: text('password_hash').notNull(),
+  /**
+   * CPF/CNPJ da agência. O Asaas não cria cliente sem documento, então o
+   * cadastro passou a pedir. Nulo em DB só por causa das contas abertas antes
+   * de existir cobrança.
+   */
+  cpfCnpj: text('cpf_cnpj'),
+  /**
+   * Fim do teste grátis. Nulo identifica conta anterior à cobrança: essas
+   * seguem entrando sem assinatura, senão a migration trancaria quem já usa.
+   */
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   verificationCode: text('verification_code'),
   onboardedAt: timestamp('onboarded_at', { withTimezone: true }),
@@ -142,8 +161,74 @@ export const movements = pgTable('movement', {
 });
 
 // ---------------------------------------------------------------------------
+// Assinatura (Asaas)
+// ---------------------------------------------------------------------------
+/**
+ * Estado de cobrança da conta — uma linha por agência.
+ *
+ * Nada disso existe durante o teste grátis: a linha só nasce quando a agência
+ * manda abrir o checkout. Quem cria a assinatura e o cliente no Asaas é a
+ * página de pagamento hospedada — por isso os três ids são nulos até a
+ * primeira cobrança ser paga.
+ */
+export const subscriptions = pgTable('subscription', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  ownerId: uuid('owner_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  asaasCustomerId: text('asaas_customer_id'),
+  asaasSubscriptionId: text('asaas_subscription_id').unique(),
+  /**
+   * Checkout aberto e ainda não pago. É a única chave que temos para ligar o
+   * evento `CHECKOUT_PAID` de volta a esta conta: o Asaas não expõe endpoint
+   * para consultar um checkout depois de criado.
+   */
+  checkoutId: text('checkout_id'),
+  status: subscriptionStatusEnum('status').notNull().default('PENDENTE'),
+  /** Forma de cobrança da assinatura. Hoje sempre CREDIT_CARD — é a única que
+   *  o Asaas renova sozinho; a coluna fica para quando PIX/boleto voltarem. */
+  billingType: text('billing_type'),
+  /** Em centavos, como o resto do sistema conta dinheiro. */
+  valueCents: integer('value_cents').notNull(),
+  /** Vencimento da fatura em aberto (data pura, do jeito que o Asaas manda). */
+  nextDueDate: date('next_due_date'),
+  /** Página de pagamento da fatura em aberto — PIX, boleto ou cartão, no Asaas. */
+  invoiceUrl: text('invoice_url'),
+  /**
+   * Até quando o acesso está pago. É o único campo que o portão consulta:
+   * guardar uma data (e não "está pago?") faz o mês seguinte expirar sozinho,
+   * mesmo que nenhum webhook chegue avisando.
+   */
+  paidThrough: timestamp('paid_through', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// Eventos de webhook do Asaas — só para idempotência
+// ---------------------------------------------------------------------------
+/**
+ * O Asaas entrega "at least once": o mesmo evento chega mais de uma vez. A
+ * chave primária é o id do evento (`evt_…`), então o segundo POST bate no
+ * unique e a rota devolve 200 sem reprocessar o pagamento.
+ */
+export const asaasEvents = pgTable('asaas_event', {
+  id: text('id').primaryKey(),
+  event: text('event').notNull(),
+  receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------
+export const usersRelations = relations(users, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [users.id],
+    references: [subscriptions.ownerId],
+  }),
+}));
+
 export const storageLocationsRelations = relations(storageLocations, ({ many }) => ({
   positions: many(positions),
 }));
@@ -175,3 +260,5 @@ export type LocationKind = (typeof locationKindEnum.enumValues)[number];
 export type Position = typeof positions.$inferSelect;
 export type Item = typeof items.$inferSelect;
 export type Movement = typeof movements.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type SubscriptionStatus = (typeof subscriptionStatusEnum.enumValues)[number];

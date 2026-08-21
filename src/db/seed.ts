@@ -13,6 +13,8 @@ import * as schema from './schema';
 
 const { users, storageLocations, positions, items, movements } = schema;
 
+const TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+
 const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
 const db = drizzle(sql, { schema, casing: 'snake_case' });
 
@@ -37,6 +39,10 @@ async function main() {
       email: 'operador@estoque.dev',
       name: 'Operador Demo',
       passwordHash,
+      cpfCnpj: '52998224725',
+      // Teste grátis contado a partir do seed: o app trava depois disso, então
+      // o dev vê o fluxo de cobrança de verdade — `npm run db:seed` renova.
+      trialEndsAt: new Date(Date.now() + TRIAL_MS),
       emailVerifiedAt: new Date(),
       onboardedAt: new Date(),
     })
