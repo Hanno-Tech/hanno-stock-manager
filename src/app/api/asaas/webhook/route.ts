@@ -27,6 +27,11 @@ import {
  *     mesma transação, e a leitura no Asaas vem antes dela. Se algo falhar, o
  *     evento não fica marcado como processado e a retentativa do Asaas resolve
  *     — ao contrário de "gravou o id, respondeu 200 e depois quebrou".
+ *  4. **A fila não pode pausar à toa.** O Asaas só aceita **200** como sucesso;
+ *     qualquer outro código é retentativa, e 15 seguidas interrompem a fila.
+ *     Por isso só devolvemos erro no que a retentativa pode resolver: token
+ *     inválido (401) e falha nossa ao processar (500 pela exceção). Payload
+ *     estranho responde 200 e vira log.
  *
  * Em vez de interpretar cada evento, qualquer evento relevante dispara uma
  * releitura das cobranças da assinatura. Um evento perdido ou fora de ordem não
@@ -84,7 +89,14 @@ export async function POST(req: Request) {
   }
 
   const parsed = eventoSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return recebido(false, 400);
+  if (!parsed.success) {
+    // 200 de propósito. O Asaas só considera sucesso o 200: qualquer outro
+    // código vira retentativa, e 15 seguidas pausam a fila inteira. Payload que
+    // não entendemos não melhora se for reenviado — pausar a fila por causa
+    // dele derrubaria também os eventos que importam.
+    console.error('[asaas] webhook com payload inesperado:', JSON.stringify(parsed.error.issues));
+    return recebido(true);
+  }
   const evento = parsed.data;
 
   const [visto] = await db

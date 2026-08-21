@@ -14,9 +14,16 @@ import {
 
 export type BillingActionState = { error?: string; ok?: string };
 
-/** Mensagem que a agência entende, sem vazar detalhe de integração. */
-const mensagem = (e: unknown, fallback: string): string =>
-  e instanceof AsaasError ? e.message : fallback;
+/**
+ * O que a agência lê quando algo falha. Só repassa a mensagem do erro quando
+ * ela foi marcada como pública; qualquer outra coisa vira o texto genérico e o
+ * detalhe fica no log. Falha de configuração não é assunto de quem usa o app.
+ */
+function mensagem(e: unknown, fallback: string): string {
+  if (e instanceof AsaasError && e.publico) return e.message;
+  console.error('[cobrança]', e);
+  return fallback;
+}
 
 function revalidar() {
   revalidatePath('/assinatura');

@@ -33,6 +33,11 @@ export class AsaasError extends Error {
     message: string,
     readonly status?: number,
     readonly code?: string,
+    /**
+     * A `message` pode ir para a tela. Padrão `false` de propósito: um erro
+     * novo só chega ao cliente se alguém disser explicitamente que pode.
+     */
+    readonly publico = false,
   ) {
     super(message);
     this.name = 'AsaasError';
@@ -45,7 +50,7 @@ const GENERICA = 'Não foi possível processar o pagamento agora. Tente de novo 
 /** Registra o detalhe no servidor e devolve o erro genérico para a tela. */
 export function falhaAsaas(detalhe: string, status?: number, code?: string): AsaasError {
   console.error('[asaas]', detalhe);
-  return new AsaasError(GENERICA, status, code);
+  return new AsaasError(GENERICA, status, code, true);
 }
 
 function baseUrl(key: string): string {

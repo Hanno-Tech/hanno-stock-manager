@@ -70,7 +70,8 @@ function urlBase(): string {
 export async function startCheckout(user: User): Promise<string> {
   const sub = await linhaDaConta(user.id);
   if (temAssinaturaAtiva(sub)) {
-    throw new asaas.AsaasError('Esta conta já tem assinatura ativa.');
+    // Fato de negócio, não de configuração: pode aparecer na tela.
+    throw new asaas.AsaasError('Esta conta já tem assinatura ativa.', undefined, undefined, true);
   }
 
   const base = urlBase();
