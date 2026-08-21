@@ -5,7 +5,7 @@ guarda num local nomeado ("Estante 1", "Caixa 2") e acha na hora em que o client
 chega para retirar.
 Stack: **Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 + shadcn/ui (Base UI) · PostgreSQL 16 · Drizzle ORM · Node 24 LTS**.
 
-📄 Planejamento: [`docs/PLAN.md`](docs/PLAN.md) · Modelo de dados: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
+📄 Planejamento: [`docs/PLAN.md`](docs/PLAN.md) · Modelo de dados: [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) · Cobrança: [`docs/ASAAS.md`](docs/ASAAS.md)
 
 ## Pré-requisitos
 - Node 24 LTS (`nvm use`)
